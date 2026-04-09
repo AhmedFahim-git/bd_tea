@@ -1,0 +1,26 @@
+[project]
+name = "bd-tea"
+version = "0.1.0"
+requires-python = ">=3.13"
+dependencies = [
+    "cartopy>=0.25.0",
+    "folium>=0.20.0",
+    "gdal[numpy]==3.12.2.*",
+    "geopandas>=1.1.2",
+    "h3>=4.4.2",
+    "jupyter>=1.1.1",
+    "matplotlib>=3.10.8",
+    "openpyxl>=3.1.5",
+    "pandas>=3.0.1",
+    "plotly[express]>=6.6.0",
+    "pyarrow>=23.0.1",
+    "pyogrio>=0.12.1",
+    "pyproj>=3.7.2",
+    "rasterio>=1.5.0",
+    "rioxarray>=0.21.0",
+    "setuptools>=82.0.0",
+    "shapely>=2.1.2",
+    "streamlit>=1.56.0",
+    "streamlit-folium>=0.27.1",
+    "wheel>=0.46.3",
+]
