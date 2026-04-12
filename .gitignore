@@ -218,7 +218,6 @@ __marimo__/
 
 *.parquet
 *.shp
-*.csv
 *.xlsx
 *.gpkg
 *.gdb
