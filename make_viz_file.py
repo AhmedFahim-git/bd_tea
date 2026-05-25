@@ -2,124 +2,38 @@ import geopandas as gpd
 import numpy as np
 import pandas as pd
 
+from constants import (
+    ALL_DISTRICT_COLUMNS,
+    ALL_THANA_COLUMNS,
+    BBS_DISTRICT_MAP,
+    DISTANCE_RAD_METRIC_INIT_COLS,
+    ELECTRICITY_BBS_COLS,
+    EMPLOY_BBS_COLS,
+    FINANCIAL_BBS_COLS,
+    INTERNET_BBS_COLS,
+    LITERACY_BBS_COLS,
+    MOBILE_BANK_BBS_COLS,
+    MOBILE_BBS_COLS,
+    POVERTY_COLS,
+    POVERTY_THANA_COLS,
+    TEA_DISTRICT_MAP,
+    TEA_THANA_MAP,
+    XYZ_JOIN_COLS,
+)
 
-def agg_func(in_df):
-    avg = np.average(in_df["nearest_distance"], weights=in_df["pop_den"])
-    std_dev = np.sqrt(
-        np.average(np.square(in_df["nearest_distance"] - avg), weights=in_df["pop_den"])
-    )
-    return pd.Series(
-        {
-            "mean_distance": avg,
-            "min_distance": np.min(in_df["nearest_distance"]),
-            "max_distance": np.max(in_df["nearest_distance"]),
-            "median_distance": np.quantile(
-                in_df["nearest_distance"],
-                q=0.5,
-                method="inverted_cdf",
-                weights=in_df["pop_den"],
-            ).item(),
-            "25_perc_distance": np.quantile(
-                in_df["nearest_distance"],
-                q=0.25,
-                method="inverted_cdf",
-                weights=in_df["pop_den"],
-            ).item(),
-            "75_perc_distance": np.quantile(
-                in_df["nearest_distance"],
-                q=0.75,
-                method="inverted_cdf",
-                weights=in_df["pop_den"],
-            ).item(),
-            "std_dev_distance": std_dev,
-        }
-    ).astype(int)
+NUM_500_MAP = {(0, 2): "bad", (2, 5): "ok", (5, float("inf")): "good"}
+NUM_1000_MAP = {(0, 4): "bad", (4, 11): "ok", (11, float("inf")): "good"}
+NUM_2000_MAP = {(0, 9): "bad", (9, 26): "ok", (26, float("inf")): "good"}
+NUM_5000_MAP = {(0, 26): "bad", (26, 81): "ok", (81, float("inf")): "good"}
+NUM_10000_MAP = {(0, 76): "bad", (76, 251): "ok", (251, float("inf")): "good"}
+
+DIST_MAP = {(0, 2000): "good", (2000, 5000): "ok", (5000, float("inf")): "bad"}
+
+RADIUS_DISTANCES = [500, 1000, 2000, 5000, 10000]
+RADIUS_MAPS = [NUM_500_MAP, NUM_1000_MAP, NUM_2000_MAP, NUM_5000_MAP, NUM_10000_MAP]
 
 
-REQD_DISTRICT_COLUMNS = [
-    "geometry",
-    "District",
-    "admin1Name_en",
-    "AREA_SQKM",
-    "T_TL",
-    "M_TL",
-    "F_TL",
-    "Inernet_Total_15 year+",
-    "Inernet_Male_15 year+",
-    "Inernet_Female_15 year+",
-    "Mobile Phone_Total_15 year+",
-    "Mobile Phone_Male_15 year+",
-    "Mobile Phone_Female_15 year+",
-    "Literacy Rate_7year+_Overall",
-    "Literacy Rate_7year+_Male",
-    "Literacy Rate_7year+_Female",
-    "Employment_Rate",
-    "Employment_Rate_Male",
-    "Employment_Rate_Female",
-    "Num_op_x_towers",
-    "Cell_tower_density",
-    "Tea_State_Count",
-    "mean_distance",
-    "min_distance",
-    "max_distance",
-    "median_distance",
-    "25_perc_distance",
-    "75_perc_distance",
-    "std_dev_distance",
-]
-REQD_THANA_COLUMNS = [
-    "geometry",
-    "admin1Name_en",
-    "admin2Name_en",
-    "admin3Name_en",
-    "admin3Pcode",
-    "AREA_SQKM",
-    "T_TL",
-    "M_TL",
-    "F_TL",
-    "Num_op_x_towers",
-    "Cell_tower_density",
-    "Tea_State_Count",
-    "mean_distance",
-    "min_distance",
-    "max_distance",
-    "median_distance",
-    "25_perc_distance",
-    "75_perc_distance",
-    "std_dev_distance",
-]
-BBS_DISTRICT_MAP = {
-    "Barishal": "Barisal",
-    "Bogura": "Bogra",
-    "Brahmanbaria": "Brahamanbaria",
-    "Chattogram": "Chittagong",
-    "Cumilla": "Comilla",
-    "Jashore": "Jessore",
-    "Moulvibazar": "Maulvibazar",
-    "Chapainababganj": "Nawabganj",
-}
-
-tea_state_divisions = ["Chittagong", "Sylhet", "Rangpur"]
-if __name__ == "__main__":
-    adm_data_2 = gpd.read_file(
-        "data/BGD_AdminBoundaries_candidate.gdb", layer="bgd_admbnda_adm2_bbs_20201113"
-    )
-    adm_data_table_2 = pd.read_excel(
-        "data/bgd_adminboundaries_tabulardata.xlsx", sheet_name="ADM2"
-    )
-    adm_pop_2 = pd.read_excel(
-        "data/bgd_admpop_2022.xlsx", sheet_name="bgd_admpop_adm2_2022"
-    )
-    adm_data_3 = gpd.read_file(
-        "data/BGD_AdminBoundaries_candidate.gdb", layer="bgd_admbnda_adm3_bbs_20201113"
-    )
-    adm_data_table_3 = pd.read_excel(
-        "data/bgd_adminboundaries_tabulardata.xlsx", sheet_name="ADM3"
-    )
-    adm_pop_3 = pd.read_excel(
-        "data/bgd_admpop_2022.xlsx", sheet_name="bgd_admpop_adm3_2022"
-    )
-
+def get_bbs_data() -> pd.DataFrame:
     internet_bbs = pd.read_excel(
         "data/bangladesh_bbs_population-and-housing-census-dataset_2022_admin-02.xlsx",
         sheet_name="Internet User",
@@ -136,54 +50,38 @@ if __name__ == "__main__":
         "data/bangladesh_bbs_population-and-housing-census-dataset_2022_admin-02.xlsx",
         sheet_name=" Aged 5 Yrs & Above_Working Sta",
     )
+    financial_bbs = pd.read_excel(
+        "data/bangladesh_bbs_population-and-housing-census-dataset_2022_admin-02.xlsx",
+        sheet_name="Having Account in Financial",
+    )
+    mobile_bank_bbs = pd.read_excel(
+        "data/bangladesh_bbs_population-and-housing-census-dataset_2022_admin-02.xlsx",
+        sheet_name=" Having Mobile Banking Account",
+    )
+    electricity_bbs = pd.read_excel(
+        "data/bangladesh_bbs_population-and-housing-census-dataset_2022_admin-02.xlsx",
+        sheet_name=" Main Source of Electricity ",
+    )
     bbs_data = (
-        internet_bbs[
-            [
-                "District",
-                "Inernet_Total_15 year+",
-                "Inernet_Male_15 year+",
-                "Inernet_Female_15 year+",
-            ]
-        ]
+        internet_bbs[INTERNET_BBS_COLS]
         .merge(
-            mobile_bbs[
-                [
-                    "District",
-                    "Mobile Phone_Total_15 year+",
-                    "Mobile Phone_Male_15 year+",
-                    "Mobile Phone_Female_15 year+",
-                ]
-            ],
+            mobile_bbs[MOBILE_BBS_COLS],
             on="District",
             validate="one_to_one",
         )
         .merge(
-            literacy_bbs[
-                [
-                    "District",
-                    "Literacy Rate_7year+_Overall",
-                    "Literacy Rate_7year+_Male",
-                    "Literacy Rate_7year+_Female",
-                ]
-            ],
+            literacy_bbs[LITERACY_BBS_COLS],
             on="District",
             validate="one_to_one",
         )
         .merge(
-            employ_bbs[
-                [
-                    "District",
-                    "Overall_Working_Status_5 Year+",
-                    "Overall_Working_Status_5 Year+_Male",
-                    "Overall_Working_Status_5 Year+_Female",
-                    "Overall_Employed_Working_Status_5 Year+",
-                    "Overall_Employed_Working_Status_5 Year+_Male",
-                    "Overall_Employed_Working_Status_5 Year+_Female",
-                ]
-            ],
+            employ_bbs[EMPLOY_BBS_COLS],
             on="District",
             validate="one_to_one",
         )
+        .merge(financial_bbs[FINANCIAL_BBS_COLS])
+        .merge(mobile_bank_bbs[MOBILE_BANK_BBS_COLS])
+        .merge(electricity_bbs[ELECTRICITY_BBS_COLS])
     ).replace({"District": BBS_DISTRICT_MAP})
 
     bbs_data["Employment_Rate"] = (
@@ -207,6 +105,291 @@ if __name__ == "__main__":
         )
         * 100
     ).round(2)
+
+    return bbs_data
+
+
+def get_poverty_df(adm_data: pd.DataFrame) -> pd.DataFrame:
+    poverty_df = pd.read_excel("data/zila_and_upazila_data/zila_indicators.xlsx")
+    poverty_df["admin2Pcode"] = "BD" + poverty_df["DisGeoCode"].astype(str)
+
+    poverty_df["combined"] = poverty_df.apply(
+        func=lambda x: (x["Zila Name"].title(),), axis=1
+    )
+    adm_data["combined"] = adm_data.apply(func=lambda x: (x["admin2Name_en"],), axis=1)
+    temp_pcode_dict = (
+        adm_data.loc[
+            adm_data["admin2Pcode"].isin(
+                set(adm_data["admin2Pcode"]) - set(poverty_df["admin2Pcode"])
+            )
+        ]
+        .set_index("combined")["admin2Pcode"]
+        .to_dict()
+    )
+    adm_data = adm_data.drop(columns=["combined"])
+
+    poverty_df.loc[
+        poverty_df["admin2Pcode"].isin(
+            set(poverty_df["admin2Pcode"]) - set(adm_data["admin2Pcode"])
+        ),
+        "admin2Pcode",
+    ] = poverty_df.loc[
+        poverty_df["admin2Pcode"].isin(
+            set(poverty_df["admin2Pcode"]) - set(adm_data["admin2Pcode"])
+        ),
+        "combined",
+    ].map(temp_pcode_dict)
+    return poverty_df
+
+
+def get_poverty_df_thana(adm_data: pd.DataFrame) -> pd.DataFrame:
+    poverty_df_thana = pd.read_excel(
+        "data/zila_and_upazila_data/upazila_indicators.xlsx"
+    )
+    poverty_gdf_thana = gpd.read_file(
+        "data/gis_data/gdb/Bangladesh_Data.gdb", layer="Bangladesh_Upazilas"
+    )[["UpazCode", "Division_N", "District_N", "Thana_Name"]].rename(
+        columns={
+            "Division_N": "Division Name",
+            "District_N": "Zila Name",
+            "Thana_Name": "Upazila Name",
+        }
+    )
+
+    poverty_gdf_thana.loc[poverty_gdf_thana["UpazCode"] == 507088, "Upazila Name"] = (
+        "SHIBGANJ"
+    )
+
+    poverty_df_thana["combined"] = poverty_df_thana.apply(
+        func=lambda x: (x["Division Name"], x["Zila Name"], x["Upazila Name"]), axis=1
+    )
+    poverty_gdf_thana["combined"] = poverty_gdf_thana.apply(
+        func=lambda x: (x["Division Name"], x["Zila Name"], x["Upazila Name"]), axis=1
+    )
+    poverty_gdf_thana.loc[
+        poverty_gdf_thana["combined"].isin(
+            set(poverty_gdf_thana["combined"]) - set(poverty_df_thana["combined"])
+        ),
+        "Upazila Name",
+    ] = poverty_gdf_thana.apply(
+        lambda x: x["Upazila Name"].rstrip("(" + x["Zila Name"] + ")").strip(), axis=1
+    ).loc[
+        poverty_gdf_thana["combined"].isin(
+            set(poverty_gdf_thana["combined"]) - set(poverty_df_thana["combined"])
+        )
+    ]
+    poverty_df_thana = poverty_df_thana.drop(columns="combined")
+    poverty_gdf_thana = poverty_gdf_thana.drop(columns="combined")
+
+    poverty_df_thana = poverty_df_thana.merge(
+        pd.DataFrame(poverty_gdf_thana),
+        on=["Division Name", "Zila Name", "Upazila Name"],
+        validate="one_to_one",
+    )
+    poverty_df_thana["UpazCode"] = poverty_df_thana["UpazCode"].astype(int)
+
+    poverty_df_thana.loc[poverty_df_thana["UpazCode"] == 303985, "UpazCode"] = 453985
+
+    poverty_df_thana["admin3Pcode"] = "BD" + poverty_df_thana["UpazCode"].astype(str)
+
+    poverty_df_thana["combined"] = poverty_df_thana.apply(
+        func=lambda x: (x["Zila Name"].title(), x["Upazila Name"].title()), axis=1
+    )
+    adm_data["combined"] = adm_data.apply(
+        func=lambda x: (x["admin2Name_en"], x["admin3Name_en"]), axis=1
+    )
+
+    adm_pcode_dict = (
+        adm_data.loc[
+            adm_data["admin3Pcode"].isin(
+                set(adm_data["admin3Pcode"]) - set(poverty_df_thana["admin3Pcode"])
+            )
+        ]
+        .set_index("combined")["admin3Pcode"]
+        .to_dict()
+    )
+    adm_data = adm_data.drop(columns=["combined"])
+
+    poverty_df_thana.loc[
+        poverty_df_thana["admin3Pcode"].isin(
+            set(poverty_df_thana["admin3Pcode"]) - set(adm_data["admin3Pcode"])
+        ),
+        "admin3Pcode",
+    ] = poverty_df_thana.loc[
+        poverty_df_thana["admin3Pcode"].isin(
+            set(poverty_df_thana["admin3Pcode"]) - set(adm_data["admin3Pcode"])
+        ),
+        "combined",
+    ].map(adm_pcode_dict)
+    return poverty_df_thana
+
+
+def agg_func(in_df: pd.DataFrame) -> pd.Series:
+    avg = np.average(in_df["nearest_distance"], weights=in_df["pop_den"])
+    std_dev = np.sqrt(
+        np.average(np.square(in_df["nearest_distance"] - avg), weights=in_df["pop_den"])
+    )
+    distance_metrics = {
+        "mean_distance": avg,
+        "min_distance": np.min(in_df["nearest_distance"]),
+        "max_distance": np.max(in_df["nearest_distance"]),
+        "median_distance": np.quantile(
+            in_df["nearest_distance"],
+            q=0.5,
+            method="inverted_cdf",
+            weights=in_df["pop_den"],
+        ).item(),
+        "25_perc_distance": np.quantile(
+            in_df["nearest_distance"],
+            q=0.25,
+            method="inverted_cdf",
+            weights=in_df["pop_den"],
+        ).item(),
+        "75_perc_distance": np.quantile(
+            in_df["nearest_distance"],
+            q=0.75,
+            method="inverted_cdf",
+            weights=in_df["pop_den"],
+        ).item(),
+        "std_dev_distance": std_dev,
+    }
+    tower_radius_metrics = {
+        f"mean_num_tower_{i}m": np.average(
+            in_df[f"num_tower_{i}m"], weights=in_df["pop_den"]
+        )
+        for i in RADIUS_DISTANCES
+    }
+    return pd.Series(
+        {k: round(v) for k, v in distance_metrics.items()} | tower_radius_metrics
+    )
+
+
+def get_quality(metric: int, metric_dict: dict[tuple[float, float], str]) -> str:
+    for (lower_bound, upper_bound), v in metric_dict.items():
+        if (metric >= lower_bound) and (metric < upper_bound):
+            return v
+    return "Invalid"
+
+
+def get_num_tower_radius_map(
+    input_df: gpd.GeoDataFrame, tower_df: gpd.GeoDataFrame, radius: int
+) -> dict[int, int]:
+    return (
+        input_df.to_crs(epsg=3106)
+        .buffer(radius)
+        .reset_index()
+        .rename(columns={"index": "ind", 0: "geometry"})
+        .set_geometry("geometry")
+        .to_crs(epsg=4326)
+        .sjoin(tower_df)
+        .groupby("ind")
+        .size()
+        .to_dict()
+    )
+
+
+def get_dist_num_tower_rad_metrics(
+    input_df: gpd.GeoDataFrame, tower_df: gpd.GeoDataFrame
+) -> gpd.GeoDataFrame:
+    input_df["ind"] = range(len(input_df))
+    nearest_map = (
+        input_df.to_crs(epsg=3106)
+        .sjoin_nearest(tower_df.to_crs(epsg=3106), distance_col="nearest_distance")
+        .set_index("ind")["nearest_distance"]
+        .to_dict()
+    )
+    input_df["nearest_distance"] = input_df["ind"].map(nearest_map).fillna(0)
+
+    for i in RADIUS_DISTANCES:
+        rad_map = get_num_tower_radius_map(input_df, tower_df, i)
+        input_df[f"num_tower_{i}m"] = input_df["ind"].map(rad_map).fillna(0).astype(int)
+
+    return input_df.drop(columns=["ind"])
+
+
+def get_xyz_data(tower_df: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
+    xyz = pd.read_csv("data/bgd_pd_2020_1km_UNadj_ASCII_XYZ.csv").rename(
+        columns={"X": "lon", "Y": "lat", "Z": "pop_den"}
+    )
+    xyz = gpd.GeoDataFrame(
+        xyz, geometry=gpd.points_from_xy(x=xyz.lon, y=xyz.lat, crs="EPSG:4326")
+    )
+    return get_dist_num_tower_rad_metrics(xyz, tower_df)
+
+
+def get_adm_dist_metrics(
+    in_df: gpd.GeoDataFrame, adm_data: gpd.GeoDataFrame, adm_join_col: str
+) -> pd.DataFrame:
+    selected_cols = [adm_join_col] + DISTANCE_RAD_METRIC_INIT_COLS
+    return pd.DataFrame(
+        adm_data[["geometry", adm_join_col]]
+        .sjoin(in_df[XYZ_JOIN_COLS])[selected_cols]
+        .groupby(adm_join_col, as_index=False)
+        .apply(agg_func)
+    )
+
+
+def get_cell_tower_metrics(
+    adm_data: gpd.GeoDataFrame, tower_df: gpd.GeoDataFrame, adm_join_col: str
+) -> pd.DataFrame:
+    cell_tower_dict = adm_data.sjoin(tower_df).groupby(adm_join_col).size().to_dict()
+
+    adm_data["Num_op_x_towers"] = adm_data[adm_join_col].map(cell_tower_dict)
+    adm_data["Cell_tower_density"] = adm_data["Num_op_x_towers"] / adm_data["AREA_SQKM"]
+
+    return pd.DataFrame(
+        adm_data[[adm_join_col, "Num_op_x_towers", "Cell_tower_density"]]
+    )
+
+
+def get_tea_lat_lon(tower_df: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
+    t_lat_lon = pd.read_csv("data/tea_lat_lon.csv")
+
+    t_lat_lon = gpd.GeoDataFrame(
+        data=t_lat_lon,
+        geometry=gpd.points_from_xy(x=t_lat_lon.lon, y=t_lat_lon.lat, crs="EPSG:4326"),
+    )
+    t_lat_lon = get_dist_num_tower_rad_metrics(t_lat_lon, tower_df)
+    for i, rad_map in zip(RADIUS_DISTANCES, RADIUS_MAPS):
+        t_lat_lon[f"num_tower_{i}m_quality"] = t_lat_lon[f"num_tower_{i}m"].apply(
+            get_quality, metric_dict=rad_map
+        )
+
+    t_lat_lon["nearest_distance_quality"] = t_lat_lon["nearest_distance"].apply(
+        get_quality, metric_dict=DIST_MAP
+    )
+    t_lat_lon["perc_unreg_workers"] = (
+        t_lat_lon["unreg_workers"] / t_lat_lon["tot_workers"]
+    ) * 100
+    return t_lat_lon
+
+
+if __name__ == "__main__":
+    adm_data_2 = gpd.read_file(
+        "data/BGD_AdminBoundaries_candidate.gdb", layer="bgd_admbnda_adm2_bbs_20201113"
+    )
+    adm_data_table_2 = pd.read_excel(
+        "data/bgd_adminboundaries_tabulardata.xlsx", sheet_name="ADM2"
+    )
+    adm_pop_2 = pd.read_excel(
+        "data/bgd_admpop_2022.xlsx", sheet_name="bgd_admpop_adm2_2022"
+    )
+    adm_data_3 = gpd.read_file(
+        "data/BGD_AdminBoundaries_candidate.gdb", layer="bgd_admbnda_adm3_bbs_20201113"
+    )
+    adm_data_table_3 = pd.read_excel(
+        "data/bgd_adminboundaries_tabulardata.xlsx", sheet_name="ADM3"
+    )
+    adm_pop_3 = pd.read_excel(
+        "data/bgd_admpop_2022.xlsx", sheet_name="bgd_admpop_adm3_2022"
+    )
+
+    bbs_data = get_bbs_data()
+
+    net_speed_df = pd.read_excel(
+        "data/qos_radio_network_kpi_2026-05-19.xlsx", sheet_name="Sheet1", nrows=64
+    ).rename(columns={"Distric": "District"})
+    bbs_data = bbs_data.merge(net_speed_df, on="District", validate="one_to_one")
 
     adm_data_2 = adm_data_2.merge(
         adm_data_table_2[["ADM2_EN", "AREA_SQKM"]],
@@ -238,33 +421,22 @@ if __name__ == "__main__":
         right_on="District",
         validate="one_to_one",
     )
-    df = pd.read_csv("data/tea_estates_extracted.csv").rename(
-        columns={"Dakghor": "Post_Office", "Jela": "District"}
-    )
-    df["Thana"] = df["Thana"].replace(
-        {
-            "Moulvibazar": "Maulvi Bazar Sadar",
-            "Tetulia": "Tentulia",
-            "Baghaichhari": "Baghai Chhari",
-            "Habiganj": "Habiganj Sadar",
-            "Sylhet": "Sylhet Sadar",
-            "Jaintapur": "Jaintiapur",
-            "Panchagarh": "Panchagarh Sadar",
-            "Bhujpur": "Fatikchhari",
-        }
-    )
-    df["District"] = df["District"].replace(
-        {"Moulvibazar": "Maulvibazar", "Chattogram": "Chittagong"}
+
+    poverty_df = get_poverty_df(adm_data_2[["admin2Name_en", "admin2Pcode"]].copy())
+    poverty_df_thana = get_poverty_df_thana(
+        adm_data_3[["admin2Name_en", "admin3Name_en", "admin3Pcode"]].copy()
     )
 
-    tea_district_dict: dict[str, int] = df.groupby("District").size().to_dict()
-    tea_thana_dict: dict[str, int] = df.groupby("Thana").size().to_dict()
-
-    xyz = pd.read_csv("data/bgd_pd_2020_1km_UNadj_ASCII_XYZ.csv").rename(
-        columns={"X": "lon", "Y": "lat", "Z": "pop_den"}
+    adm_data_2 = adm_data_2.merge(
+        poverty_df[POVERTY_COLS],
+        on="admin2Pcode",
+        validate="one_to_one",
     )
-    xyz = gpd.GeoDataFrame(
-        xyz, geometry=gpd.points_from_xy(x=xyz.lon, y=xyz.lat, crs="EPSG:4326")
+
+    adm_data_3 = adm_data_3.merge(
+        poverty_df_thana[POVERTY_THANA_COLS],
+        on="admin3Pcode",
+        validate="one_to_one",
     )
 
     op_x_tower_loc = pd.read_excel(
@@ -276,68 +448,68 @@ if __name__ == "__main__":
             x=op_x_tower_loc.Lon, y=op_x_tower_loc.Lat, crs="EPSG:4326"
         ),
     )
-    xyz_nearest_tower = (
-        xyz.to_crs(epsg=3106)
-        .sjoin_nearest(
-            op_x_tower_loc.to_crs(epsg=3106), distance_col="nearest_distance"
-        )
-        .to_crs(epsg=4326)
+
+    district_cell_tower_metrics = get_cell_tower_metrics(
+        adm_data_2[["geometry", "admin2Name_en", "AREA_SQKM"]].copy(),
+        op_x_tower_loc,
+        "admin2Name_en",
+    )
+    thana_cell_tower_metrics = get_cell_tower_metrics(
+        adm_data_3[["geometry", "admin3Pcode", "AREA_SQKM"]].copy(),
+        op_x_tower_loc,
+        "admin3Pcode",
     )
 
-    cell_tower_district_dict = (
-        adm_data_2.sjoin(op_x_tower_loc).groupby("admin2Name_en").size().to_dict()
+    adm_data_2 = adm_data_2.merge(
+        district_cell_tower_metrics, on="admin2Name_en", validate="one_to_one"
+    )
+    adm_data_3 = adm_data_3.merge(
+        thana_cell_tower_metrics, on="admin3Pcode", validate="one_to_one"
     )
 
-    adm_data_2["Num_op_x_towers"] = adm_data_2["admin2Name_en"].map(
-        cell_tower_district_dict
-    )
-    adm_data_2["Cell_tower_density"] = (
-        adm_data_2["Num_op_x_towers"] / adm_data_2["AREA_SQKM"]
-    )
+    xyz = get_xyz_data(op_x_tower_loc)
 
-    cell_tower_thana_dict = (
-        adm_data_3.sjoin(op_x_tower_loc).groupby("admin3Name_en").size().to_dict()
+    district_tower_metrics = get_adm_dist_metrics(
+        xyz, adm_data_2[["geometry", "admin2Name_en"]].copy(), "admin2Name_en"
+    )
+    thana_tower_metrics = get_adm_dist_metrics(
+        xyz, adm_data_3[["geometry", "admin3Pcode"]].copy(), "admin3Pcode"
     )
 
-    adm_data_3["Num_op_x_towers"] = adm_data_3["admin3Name_en"].map(
-        cell_tower_thana_dict
+    adm_data_2 = adm_data_2.merge(
+        district_tower_metrics, on="admin2Name_en", validate="one_to_one"
     )
-    adm_data_3["Cell_tower_density"] = (
-        adm_data_3["Num_op_x_towers"] / adm_data_3["AREA_SQKM"]
-    )
-
-    adm_data_2["Tea_State_Count"] = adm_data_2["admin2Name_en"].map(tea_district_dict)
-    adm_data_2["Tea_State_Count"] = adm_data_2["Tea_State_Count"].fillna(0)
-
-    adm_data_3["Tea_State_Count"] = adm_data_3["admin3Name_en"].map(tea_thana_dict)
-    adm_data_3["Tea_State_Count"] = adm_data_3["Tea_State_Count"].fillna(0)
-
-    distance_district_metrics = (
-        adm_data_2[["geometry", "admin2Name_en"]]
-        .sjoin(xyz_nearest_tower[["geometry", "pop_den", "nearest_distance"]])[
-            ["admin2Name_en", "pop_den", "nearest_distance"]
-        ]
-        .groupby("admin2Name_en", as_index=False)
-        .apply(agg_func)
+    adm_data_3 = adm_data_3.merge(
+        thana_tower_metrics, on="admin3Pcode", validate="one_to_one"
     )
 
-    distance_thana_metrics = (
-        adm_data_3[["geometry", "admin3Pcode"]]
-        .sjoin(xyz_nearest_tower[["geometry", "pop_den", "nearest_distance"]])[
-            ["admin3Pcode", "pop_den", "nearest_distance"]
-        ]
-        .groupby("admin3Pcode", as_index=False)
-        .apply(agg_func)
+    df = pd.read_csv("data/tea_estates_extracted.csv").rename(
+        columns={"Dakghor": "Post_Office", "Jela": "District"}
+    )
+    df["Thana"] = df["Thana"].replace(TEA_THANA_MAP)
+    df["District"] = df["District"].replace(TEA_DISTRICT_MAP)
+
+    tea_district_dict: dict[str, int] = df.groupby("District").size().to_dict()
+    tea_thana_dict: dict[str, int] = df.groupby("Thana").size().to_dict()
+
+    adm_data_2["Tea_State_Count"] = (
+        adm_data_2["admin2Name_en"].map(tea_district_dict).fillna(0).astype(int)
     )
 
-    final_df = adm_data_2.merge(
-        distance_district_metrics, on="admin2Name_en", validate="one_to_one"
-    )[REQD_DISTRICT_COLUMNS]
+    adm_data_3["Tea_State_Count"] = (
+        adm_data_3["admin3Name_en"].map(tea_thana_dict).fillna(0).astype(int)
+    )
+
+    t_lat_lon = get_tea_lat_lon(op_x_tower_loc)
+
+    final_df = adm_data_2[ALL_DISTRICT_COLUMNS]
     final_df.to_file("data/final_viz.gpkg")
 
-    adm_data_3.merge(distance_thana_metrics, on="admin3Pcode", validate="one_to_one")[
-        REQD_THANA_COLUMNS
-    ].to_file("data/final_thana_viz.gpkg")
+    adm_data_3[ALL_THANA_COLUMNS].to_file("data/final_thana_viz.gpkg")
+    t_lat_lon.to_file("data/tea_data.gpkg")
+    pd.DataFrame(t_lat_lon.drop(columns=["geometry", "lat", "lon"])).to_csv(
+        "data/tea_data.csv", index=False
+    )
     pd.DataFrame(final_df.drop(columns=["geometry"])).to_csv(
         "data/district_data.csv", index=False
     )

@@ -7,62 +7,18 @@ import streamlit as st
 import streamlit.components.v1 as components
 from scipy.stats import linregress
 
-DISTRICT_ONLY_VARS = [
-    "Inernet_Total_15 year+",
-    "Inernet_Male_15 year+",
-    "Inernet_Female_15 year+",
-    "Mobile Phone_Total_15 year+",
-    "Mobile Phone_Male_15 year+",
-    "Mobile Phone_Female_15 year+",
-    "Literacy Rate_7year+_Overall",
-    "Literacy Rate_7year+_Male",
-    "Literacy Rate_7year+_Female",
-    "Employment_Rate",
-    "Employment_Rate_Male",
-    "Employment_Rate_Female",
-]
-DISTRICT_THANA_VARS = [
-    "Num_op_x_towers",
-    "Cell_tower_density",
-    "mean_distance",
-    "min_distance",
-    "max_distance",
-    "median_distance",
-    "25_perc_distance",
-    "75_perc_distance",
-    "std_dev_distance",
-]
-VAR_COLS = DISTRICT_ONLY_VARS + DISTRICT_THANA_VARS
-COL_NAME_MAP = {
-    "T_TL": "Total Population",
-    "M_TL": "Male Population",
-    "F_TL": "Female Population",
-    "AREA_SQKM": "Area (in sqkm)",
-    "admin3Name_en": "Upazila",
-    "Inernet_Total_15 year+": "% of Total 15+ population using Internet",
-    "Inernet_Male_15 year+": "% of Male 15+ population using Internet",
-    "Inernet_Female_15 year+": "% of Female 15+ population using Internet",
-    "Mobile Phone_Total_15 year+": "% of Total 15+ population having Mobile Phone",
-    "Mobile Phone_Male_15 year+": "% of Male 15+ population having Mobile Phone",
-    "Mobile Phone_Female_15 year+": "% of Female 15+ population having Mobile Phone",
-    "Literacy Rate_7year+_Overall": "Literacy Rate Overall of Age 7+ (%)",
-    "Literacy Rate_7year+_Male": "Literacy Rate Male of Age 7+ (%)",
-    "Literacy Rate_7year+_Female": "Literacy Rate Female of Age 7+ (%)",
-    "Employment_Rate": "Employment Rate Overall (%)",
-    "Employment_Rate_Male": "Employment Rate of Male (%)",
-    "Employment_Rate_Female": "Employment Rate of Female (%)",
-    "Num_op_x_towers": "Number of Operator X Towers in region",
-    "Cell_tower_density": "Density of Operator X Towers(# per sqkm)",
-    "Tea_State_Count": "Number of Tea States",
-    "mean_distance": "Mean Distance to Nearest Tower (in m)",
-    "min_distance": "Min Distance to Nearest Tower (in m)",
-    "max_distance": "Max Distance to Nearest Tower (in m)",
-    "median_distance": "Median Distance to Nearest Tower (in m)",
-    "25_perc_distance": "First Quartile Distance to Nearest Tower (in m)",
-    "75_perc_distance": "3rd Quartile Distance to Nearest Tower (in m)",
-    "std_dev_distance": "Std Dev of Distance to Nearest Tower (in m)",
-}
-DATA_COLS = [COL_NAME_MAP[x] for x in VAR_COLS]
+from constants import (
+    COL_NAME_MAP,
+    DISTRICT_ONLY_VAR_COLS,
+    DISTRICT_VAR_COLS,
+    HEATMAP_DEFAULT_COLS_MAPPED,
+    TEA_TABLE_COLS,
+    TEA_VAR_COLS,
+)
+
+st.set_page_config(layout="wide")
+
+DATA_COLS = [COL_NAME_MAP[x] for x in DISTRICT_VAR_COLS]
 
 
 def read_zip_file(file_base: str) -> str:
@@ -74,16 +30,19 @@ def read_zip_file(file_base: str) -> str:
 
 @st.cache_data
 def get_map_html(var_name: str, admin_level: str) -> str:
+    file_base = ""
     if admin_level == "District":
         file_base = var_name.replace("+", "_").replace(" ", "_")
-    else:
+    elif admin_level == "Upazila":
         file_base = var_name.replace("+", "_").replace(" ", "_") + "_thana"
+    elif admin_level == "Tea":
+        file_base = var_name.replace("+", "_").replace(" ", "_") + "_tea"
     html_file = read_zip_file(file_base)
     return html_file
 
 
 @st.cache_data
-def read_data_csv():
+def read_data_csv() -> pd.DataFrame:
     df = pd.read_csv("data/district_data.csv")
     df["Tea_State_Presence"] = df["Tea_State_Count"].apply(
         lambda x: "Tea State Present" if x > 0 else "Tea State Absent"
@@ -92,10 +51,30 @@ def read_data_csv():
     return df
 
 
-def set_admin(var):
-    if var in DISTRICT_ONLY_VARS and "admin" in st.session_state:
+@st.cache_data
+def load_tea_data() -> pd.DataFrame:
+    return pd.read_csv("data/tea_data.csv")
+
+
+def set_admin(var: str) -> None:
+    if var in DISTRICT_ONLY_VAR_COLS and "admin" in st.session_state:
         print("set")
         st.session_state.admin = "District"
+
+
+def hightlight_row(row: pd.Series) -> list[str]:
+    styles = []
+    all_tea_cols = TEA_VAR_COLS
+    for col in row.index:
+        if col not in all_tea_cols:
+            styles.append("")
+            continue
+        quality_col = f"{col}_quality"
+        if row[quality_col] == "bad":
+            styles.append("color: red")
+        else:
+            styles.append("")
+    return styles
 
 
 st.header("Choropleth map showing spatial distribution")
@@ -105,7 +84,7 @@ col1, col2 = st.columns([0.6, 0.4])
 with col1:
     selected_var = st.selectbox(
         label="**Please select Variable to Visualize in Map**",
-        options=VAR_COLS,
+        options=DISTRICT_VAR_COLS,
         format_func=lambda x: COL_NAME_MAP[x],
     )
 
@@ -115,7 +94,7 @@ with col2:
     admin_level = st.selectbox(
         label="**Select Admin Level for visualization**",
         options=["District", "Upazila"],
-        disabled=selected_var in DISTRICT_ONLY_VARS,
+        disabled=selected_var in DISTRICT_ONLY_VAR_COLS,
         key="admin",
     )
 
@@ -125,7 +104,44 @@ components.html(map_html, height=800)
 
 st.divider()
 
+st.header("Sylhet Tea Gardens Deep Dive")
+
+selected_tea_var = st.selectbox(
+    label="**Please select Variable to Visualize in Map**",
+    options=TEA_VAR_COLS,
+    format_func=lambda x: COL_NAME_MAP[x],
+)
+
+tea_map_html = get_map_html(selected_tea_var, "Tea")
+
+components.html(tea_map_html, height=700)
+
+st.space("medium")
+
+tea_table = load_tea_data()
+
+
+st.dataframe(
+    tea_table.style.apply(hightlight_row, axis=1),
+    width="content",
+    hide_index=True,
+    column_order=TEA_TABLE_COLS,
+    column_config={i: COL_NAME_MAP[i] for i in TEA_TABLE_COLS}
+    | {
+        "nearest_distance": st.column_config.NumberColumn(
+            COL_NAME_MAP["nearest_distance"], format="%d"
+        ),
+        "perc_unreg_workers": st.column_config.NumberColumn(
+            COL_NAME_MAP["perc_unreg_workers"], format="percent"
+        ),
+    },
+)
+
+st.divider()
+
 st.header("Correlation among variables")
+
+st.subheader("Scatter Plot")
 
 col1, col2 = st.columns(2)
 
@@ -143,7 +159,7 @@ with col2:
     dep_var = st.selectbox(
         label="**Dependent Variable**",
         options=DATA_COLS,
-        index=len(DISTRICT_ONLY_VARS),
+        index=len(DISTRICT_ONLY_VAR_COLS),
         key="dep_var",
     )
 
@@ -174,3 +190,31 @@ fig.update_layout(
     legend_title=dict(font=dict(size=14)),
 )
 st.plotly_chart(fig)
+
+st.subheader("Correlation Heatmap")
+
+selected_cols = st.multiselect(
+    label="**Select Variables for Correlation Heatmap**",
+    options=DATA_COLS,
+    default=HEATMAP_DEFAULT_COLS_MAPPED,
+)
+
+
+cor_fig = px.imshow(
+    district_df.loc[:, selected_cols].corr(),
+    text_auto=".3g",
+    height=1000,
+    width=1000,
+    zmax=1,
+    zmin=-1,
+    color_continuous_scale="viridis",
+    labels={"x": "var_1", "y": "var_2", "color": "correlation"},
+)
+
+cor_fig.update_layout(
+    hoverlabel=dict(font=dict(size=14)),
+    legend=dict(font=dict(size=14)),
+    legend_title=dict(font=dict(size=14)),
+)
+
+st.plotly_chart(cor_fig, width="stretch", height="stretch")
