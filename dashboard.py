@@ -43,7 +43,7 @@ def get_map_html(var_name: str, admin_level: str) -> str:
 
 @st.cache_data
 def read_data_csv() -> pd.DataFrame:
-    df = pd.read_csv("data/district_data.csv")
+    df = pd.read_csv("data/final/district_data.csv")
     df["Tea_State_Presence"] = df["Tea_State_Count"].apply(
         lambda x: "Tea State Present" if x > 0 else "Tea State Absent"
     )
@@ -53,7 +53,7 @@ def read_data_csv() -> pd.DataFrame:
 
 @st.cache_data
 def load_tea_data() -> pd.DataFrame:
-    return pd.read_csv("data/tea_data.csv")
+    return pd.read_csv("data/final/tea_data.csv")
 
 
 def set_admin(var: str) -> None:

@@ -183,15 +183,6 @@ XYZ_JOIN_COLS = [
     "num_tower_10000m",
 ]
 
-# DISTRICT_RAD_METRIC_INIT_COLS = [
-#     "admin2Name_en",
-#     "pop_den",
-#     "num_tower_500m",
-#     "num_tower_1000m",
-#     "num_tower_2000m",
-#     "num_tower_5000m",
-#     "num_tower_10000m",
-# ]
 DISTANCE_RAD_METRIC_INIT_COLS = [
     "pop_den",
     "nearest_distance",
@@ -201,16 +192,6 @@ DISTANCE_RAD_METRIC_INIT_COLS = [
     "num_tower_5000m",
     "num_tower_10000m",
 ]
-
-# THANA_RAD_METRIC_INIT_COLS = [
-#     "admin3Pcode",
-#     "pop_den",
-#     "num_tower_500m",
-#     "num_tower_1000m",
-#     "num_tower_2000m",
-#     "num_tower_5000m",
-#     "num_tower_10000m",
-# ]
 
 
 ### CONSTANTS for make_map_files.py
@@ -256,6 +237,9 @@ COLOR_MAP = {
     "75_perc_distance": "RdYlGn_r",
     "std_dev_distance": "RdYlGn_r",
 }
+
+
+### CONSTANTS for make_map_files.py and dashboard.py
 
 COL_NAME_MAP = {
     "T_TL": "Total Population",
@@ -319,8 +303,6 @@ COL_NAME_MAP = {
 }
 
 
-### CONSTANTS for dashboard.py
-
 DISTRICT_ONLY_VAR_COLS = [
     "Inernet_Total_15 year+",
     "Inernet_Male_15 year+",
@@ -353,12 +335,12 @@ THANA_VAR_COLS = [
     "Num_op_x_towers",
     "Cell_tower_density",
     "mean_distance",
-    "min_distance",
-    "max_distance",
-    "median_distance",
-    "25_perc_distance",
-    "75_perc_distance",
-    "std_dev_distance",
+    # "min_distance",
+    # "max_distance",
+    # "median_distance",
+    # "25_perc_distance",
+    # "75_perc_distance",
+    # "std_dev_distance",
     "mean_num_tower_500m",
     "mean_num_tower_1000m",
     "mean_num_tower_2000m",
@@ -376,6 +358,9 @@ TEA_VAR_COLS = [
     "num_tower_5000m",
     "num_tower_10000m",
 ]
+
+
+### CONSTANTS for dashboard.py
 
 TEA_TABLE_COLS = [
     "tea_garden_bn",

@@ -35,31 +35,31 @@ RADIUS_MAPS = [NUM_500_MAP, NUM_1000_MAP, NUM_2000_MAP, NUM_5000_MAP, NUM_10000_
 
 def get_bbs_data() -> pd.DataFrame:
     internet_bbs = pd.read_excel(
-        "data/bangladesh_bbs_population-and-housing-census-dataset_2022_admin-02.xlsx",
+        "data/raw/bangladesh_bbs_population-and-housing-census-dataset_2022_admin-02.xlsx",
         sheet_name="Internet User",
     )
     mobile_bbs = pd.read_excel(
-        "data/bangladesh_bbs_population-and-housing-census-dataset_2022_admin-02.xlsx",
+        "data/raw/bangladesh_bbs_population-and-housing-census-dataset_2022_admin-02.xlsx",
         sheet_name=" Population having Mobile Phone",
     )
     literacy_bbs = pd.read_excel(
-        "data/bangladesh_bbs_population-and-housing-census-dataset_2022_admin-02.xlsx",
+        "data/raw/bangladesh_bbs_population-and-housing-census-dataset_2022_admin-02.xlsx",
         sheet_name="Literacy Rate_Aged 7 Yrs & Abov",
     )
     employ_bbs = pd.read_excel(
-        "data/bangladesh_bbs_population-and-housing-census-dataset_2022_admin-02.xlsx",
+        "data/raw/bangladesh_bbs_population-and-housing-census-dataset_2022_admin-02.xlsx",
         sheet_name=" Aged 5 Yrs & Above_Working Sta",
     )
     financial_bbs = pd.read_excel(
-        "data/bangladesh_bbs_population-and-housing-census-dataset_2022_admin-02.xlsx",
+        "data/raw/bangladesh_bbs_population-and-housing-census-dataset_2022_admin-02.xlsx",
         sheet_name="Having Account in Financial",
     )
     mobile_bank_bbs = pd.read_excel(
-        "data/bangladesh_bbs_population-and-housing-census-dataset_2022_admin-02.xlsx",
+        "data/raw/bangladesh_bbs_population-and-housing-census-dataset_2022_admin-02.xlsx",
         sheet_name=" Having Mobile Banking Account",
     )
     electricity_bbs = pd.read_excel(
-        "data/bangladesh_bbs_population-and-housing-census-dataset_2022_admin-02.xlsx",
+        "data/raw/bangladesh_bbs_population-and-housing-census-dataset_2022_admin-02.xlsx",
         sheet_name=" Main Source of Electricity ",
     )
     bbs_data = (
@@ -110,7 +110,7 @@ def get_bbs_data() -> pd.DataFrame:
 
 
 def get_poverty_df(adm_data: pd.DataFrame) -> pd.DataFrame:
-    poverty_df = pd.read_excel("data/zila_and_upazila_data/zila_indicators.xlsx")
+    poverty_df = pd.read_excel("data/raw/zila_and_upazila_data/zila_indicators.xlsx")
     poverty_df["admin2Pcode"] = "BD" + poverty_df["DisGeoCode"].astype(str)
 
     poverty_df["combined"] = poverty_df.apply(
@@ -144,10 +144,10 @@ def get_poverty_df(adm_data: pd.DataFrame) -> pd.DataFrame:
 
 def get_poverty_df_thana(adm_data: pd.DataFrame) -> pd.DataFrame:
     poverty_df_thana = pd.read_excel(
-        "data/zila_and_upazila_data/upazila_indicators.xlsx"
+        "data/raw/zila_and_upazila_data/upazila_indicators.xlsx"
     )
     poverty_gdf_thana = gpd.read_file(
-        "data/gis_data/gdb/Bangladesh_Data.gdb", layer="Bangladesh_Upazilas"
+        "data/raw/gis_data/gdb/Bangladesh_Data.gdb", layer="Bangladesh_Upazilas"
     )[["UpazCode", "Division_N", "District_N", "Thana_Name"]].rename(
         columns={
             "Division_N": "Division Name",
@@ -308,7 +308,7 @@ def get_dist_num_tower_rad_metrics(
 
 
 def get_xyz_data(tower_df: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
-    xyz = pd.read_csv("data/bgd_pd_2020_1km_UNadj_ASCII_XYZ.csv").rename(
+    xyz = pd.read_csv("data/raw/bgd_pd_2020_1km_UNadj_ASCII_XYZ.csv").rename(
         columns={"X": "lon", "Y": "lat", "Z": "pop_den"}
     )
     xyz = gpd.GeoDataFrame(
@@ -343,7 +343,7 @@ def get_cell_tower_metrics(
 
 
 def get_tea_lat_lon(tower_df: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
-    t_lat_lon = pd.read_csv("data/tea_lat_lon.csv")
+    t_lat_lon = pd.read_csv("data/intermediate/tea_lat_lon.csv")
 
     t_lat_lon = gpd.GeoDataFrame(
         data=t_lat_lon,
@@ -366,28 +366,30 @@ def get_tea_lat_lon(tower_df: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
 
 if __name__ == "__main__":
     adm_data_2 = gpd.read_file(
-        "data/BGD_AdminBoundaries_candidate.gdb", layer="bgd_admbnda_adm2_bbs_20201113"
+        "data/raw/BGD_AdminBoundaries_candidate.gdb",
+        layer="bgd_admbnda_adm2_bbs_20201113",
     )
     adm_data_table_2 = pd.read_excel(
-        "data/bgd_adminboundaries_tabulardata.xlsx", sheet_name="ADM2"
+        "data/raw/bgd_adminboundaries_tabulardata.xlsx", sheet_name="ADM2"
     )
     adm_pop_2 = pd.read_excel(
-        "data/bgd_admpop_2022.xlsx", sheet_name="bgd_admpop_adm2_2022"
+        "data/raw/bgd_admpop_2022.xlsx", sheet_name="bgd_admpop_adm2_2022"
     )
     adm_data_3 = gpd.read_file(
-        "data/BGD_AdminBoundaries_candidate.gdb", layer="bgd_admbnda_adm3_bbs_20201113"
+        "data/raw/BGD_AdminBoundaries_candidate.gdb",
+        layer="bgd_admbnda_adm3_bbs_20201113",
     )
     adm_data_table_3 = pd.read_excel(
-        "data/bgd_adminboundaries_tabulardata.xlsx", sheet_name="ADM3"
+        "data/raw/bgd_adminboundaries_tabulardata.xlsx", sheet_name="ADM3"
     )
     adm_pop_3 = pd.read_excel(
-        "data/bgd_admpop_2022.xlsx", sheet_name="bgd_admpop_adm3_2022"
+        "data/raw/bgd_admpop_2022.xlsx", sheet_name="bgd_admpop_adm3_2022"
     )
 
     bbs_data = get_bbs_data()
 
     net_speed_df = pd.read_excel(
-        "data/qos_radio_network_kpi_2026-05-19.xlsx", sheet_name="Sheet1", nrows=64
+        "data/raw/qos_radio_network_kpi_2026-05-19.xlsx", sheet_name="Sheet1", nrows=64
     ).rename(columns={"Distric": "District"})
     bbs_data = bbs_data.merge(net_speed_df, on="District", validate="one_to_one")
 
@@ -440,7 +442,7 @@ if __name__ == "__main__":
     )
 
     op_x_tower_loc = pd.read_excel(
-        "data/test.xlsx", usecols=[2, 3], skiprows=3
+        "data/raw/tower.xlsx", usecols=[2, 3], skiprows=3
     ).drop_duplicates(ignore_index=True)
     op_x_tower_loc = gpd.GeoDataFrame(
         op_x_tower_loc,
@@ -483,7 +485,7 @@ if __name__ == "__main__":
         thana_tower_metrics, on="admin3Pcode", validate="one_to_one"
     )
 
-    df = pd.read_csv("data/tea_estates_extracted.csv").rename(
+    df = pd.read_csv("data/raw/tea_estates_extracted.csv").rename(
         columns={"Dakghor": "Post_Office", "Jela": "District"}
     )
     df["Thana"] = df["Thana"].replace(TEA_THANA_MAP)
@@ -503,13 +505,13 @@ if __name__ == "__main__":
     t_lat_lon = get_tea_lat_lon(op_x_tower_loc)
 
     final_df = adm_data_2[ALL_DISTRICT_COLUMNS]
-    final_df.to_file("data/final_viz.gpkg")
+    final_df.to_file("data/intermediate/final_viz.gpkg")
 
-    adm_data_3[ALL_THANA_COLUMNS].to_file("data/final_thana_viz.gpkg")
-    t_lat_lon.to_file("data/tea_data.gpkg")
+    adm_data_3[ALL_THANA_COLUMNS].to_file("data/intermediate/final_thana_viz.gpkg")
+    t_lat_lon.to_file("data/intermediate/tea_data.gpkg")
     pd.DataFrame(t_lat_lon.drop(columns=["geometry", "lat", "lon"])).to_csv(
-        "data/tea_data.csv", index=False
+        "data/final/tea_data.csv", index=False
     )
     pd.DataFrame(final_df.drop(columns=["geometry"])).to_csv(
-        "data/district_data.csv", index=False
+        "data/final/district_data.csv", index=False
     )

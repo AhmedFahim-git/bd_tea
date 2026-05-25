@@ -14,9 +14,9 @@ from constants import (
     THANA_VAR_COLS,
 )
 
-MAP_DISTRICT_DF = gpd.read_file("data/final_viz.gpkg")
-MAP_THANA_DF = gpd.read_file("data/final_thana_viz.gpkg")
-TEA_DF = gpd.read_file("data/tea_data.gpkg")
+MAP_DISTRICT_DF = gpd.read_file("data/intermediate/final_viz.gpkg")
+MAP_THANA_DF = gpd.read_file("data/intermediate/final_thana_viz.gpkg")
+TEA_DF = gpd.read_file("data/intermediate/tea_data.gpkg")
 
 
 FOLIUM_COLOR_MAP = {"good": "green", "ok": "beige", "bad": "red"}
