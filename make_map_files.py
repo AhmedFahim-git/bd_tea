@@ -133,10 +133,10 @@ def get_tea_map_html(
                 color=FOLIUM_COLOR_MAP[row[tea_var_name + "_quality"]], icon="leaf"
             ),
             tooltip=f"""<b>Garden Name:</b> {row["tea_garden_bn"]} ({row["tea_garden_en"]})<br>
-            <b>{COL_NAME_MAP[tea_var_name]}:</b> {row[tea_var_name]:.0f} m
+            <b>{COL_NAME_MAP[tea_var_name]}:</b> {row[tea_var_name]:.0f}{" m" if tea_var_name == "nearest_distance" else ""}<br>
             <b>{COL_NAME_MAP["tot_workers"]}:</b> {row["tot_workers"]}<br>
             <b>{COL_NAME_MAP["perc_unreg_workers"]}:</b> {row["perc_unreg_workers"]:.3g} %<br>
-            <b>{COL_NAME_MAP["tea_estate_pop"]}:</b> {row["tea_estate_pop"]}<br>""",
+            <b>{COL_NAME_MAP["tea_estate_pop"]}:</b> {row["tea_estate_pop"]}""",
         ).add_to(m)
     fig = folium.Figure(height="700px").add_child(m)
     return fig._repr_html_()

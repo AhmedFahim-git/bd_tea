@@ -21,6 +21,42 @@ st.set_page_config(layout="wide")
 DATA_COLS = [COL_NAME_MAP[x] for x in DISTRICT_VAR_COLS]
 
 
+# Adapted from https://discuss.streamlit.io/t/table-of-contents-widget/3470/8
+class Toc:
+    def __init__(self):
+        self._items = []
+        self._placeholder = None
+
+    def title(self, text):
+        self._markdown(text, "h1")
+
+    def header(self, text):
+        self._markdown(text, "h2", " " * 2)
+
+    def subheader(self, text):
+        self._markdown(text, "h3", " " * 4)
+
+    def placeholder(self, sidebar=False):
+        # self._placeholder = st.sidebar.empty() if sidebar else st.empty()
+        self._placeholder_side = st.sidebar.empty()
+        self._placeholder = st.empty()
+
+    def generate(self):
+        # if self._placeholder:
+        #     self._placeholder.markdown("\n".join(self._items), unsafe_allow_html=True)
+        self._placeholder.markdown("\n".join(self._items), unsafe_allow_html=True)
+        self._placeholder_side.markdown(
+            "# Table of Contents\n" + "\n".join(self._items), unsafe_allow_html=True
+        )
+
+    def _markdown(self, text, level, space=""):
+        # key = "".join(filter(str.isalnum, text)).lower()
+        key = text.replace(" ", "-").lower()
+
+        st.markdown(f"<{level} id='{key}'>{text}</{level}>", unsafe_allow_html=True)
+        self._items.append(f"{space}* <a href='#{key}'>{text}</a>")
+
+
 def read_zip_file(file_base: str) -> str:
     with ZipFile(
         os.path.join("outputs", file_base + ".lzma"), "r", compression=ZIP_LZMA
@@ -77,7 +113,51 @@ def hightlight_row(row: pd.Series) -> list[str]:
     return styles
 
 
-st.header("Choropleth map showing spatial distribution")
+st.title("Seeping Lights ITU Data Hackathon")
+
+toc = Toc()
+
+st.subheader("Table of Contents")
+toc.placeholder()
+
+toc.header("Sylhet Tea Gardens Deep Dive")
+
+toc.subheader("Sylhet Choropleth Map with Tea Estate Markers")
+
+selected_tea_var = st.selectbox(
+    label="**Please select Variable to Visualize in Map**",
+    options=TEA_VAR_COLS,
+    format_func=lambda x: COL_NAME_MAP[x],
+)
+
+tea_map_html = get_map_html(selected_tea_var, "Tea")
+
+components.html(tea_map_html, height=700)
+
+st.space()
+toc.subheader("Sylhet Tea Estate Data Table")
+tea_table = load_tea_data()
+
+
+st.dataframe(
+    tea_table.style.apply(hightlight_row, axis=1),
+    width="content",
+    hide_index=True,
+    column_order=TEA_TABLE_COLS,
+    column_config={i: COL_NAME_MAP[i] for i in TEA_TABLE_COLS}
+    | {
+        "nearest_distance": st.column_config.NumberColumn(
+            COL_NAME_MAP["nearest_distance"], format="%d"
+        ),
+        "perc_unreg_workers": st.column_config.NumberColumn(
+            COL_NAME_MAP["perc_unreg_workers"], format="percent"
+        ),
+    },
+)
+
+st.divider()
+
+toc.header("Choropleth Map of UMC Metrics Bangladesh")
 
 col1, col2 = st.columns([0.6, 0.4])
 
@@ -104,44 +184,9 @@ components.html(map_html, height=800)
 
 st.divider()
 
-st.header("Sylhet Tea Gardens Deep Dive")
+toc.header("Correlation Among Variables")
 
-selected_tea_var = st.selectbox(
-    label="**Please select Variable to Visualize in Map**",
-    options=TEA_VAR_COLS,
-    format_func=lambda x: COL_NAME_MAP[x],
-)
-
-tea_map_html = get_map_html(selected_tea_var, "Tea")
-
-components.html(tea_map_html, height=700)
-
-st.space("medium")
-
-tea_table = load_tea_data()
-
-
-st.dataframe(
-    tea_table.style.apply(hightlight_row, axis=1),
-    width="content",
-    hide_index=True,
-    column_order=TEA_TABLE_COLS,
-    column_config={i: COL_NAME_MAP[i] for i in TEA_TABLE_COLS}
-    | {
-        "nearest_distance": st.column_config.NumberColumn(
-            COL_NAME_MAP["nearest_distance"], format="%d"
-        ),
-        "perc_unreg_workers": st.column_config.NumberColumn(
-            COL_NAME_MAP["perc_unreg_workers"], format="percent"
-        ),
-    },
-)
-
-st.divider()
-
-st.header("Correlation among variables")
-
-st.subheader("Scatter Plot")
+toc.subheader("Scatter Plot")
 
 col1, col2 = st.columns(2)
 
@@ -191,7 +236,7 @@ fig.update_layout(
 )
 st.plotly_chart(fig)
 
-st.subheader("Correlation Heatmap")
+toc.subheader("Correlation Heatmap")
 
 selected_cols = st.multiselect(
     label="**Select Variables for Correlation Heatmap**",
@@ -208,7 +253,7 @@ cor_fig = px.imshow(
     zmax=1,
     zmin=-1,
     color_continuous_scale="viridis",
-    labels={"x": "var_1", "y": "var_2", "color": "correlation"},
+    labels={"x": "var 1", "y": "var 2", "color": "correlation"},
 )
 
 cor_fig.update_layout(
@@ -218,3 +263,5 @@ cor_fig.update_layout(
 )
 
 st.plotly_chart(cor_fig, width="stretch", height="stretch")
+
+toc.generate()
