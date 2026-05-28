@@ -89,7 +89,10 @@ def read_data_csv() -> pd.DataFrame:
 
 @st.cache_data
 def load_tea_data() -> pd.DataFrame:
-    return pd.read_csv("data/final/tea_data.csv")
+    tea_df = pd.read_csv("data/final/tea_data.csv")
+    tea_df["perc_unreg_workers"] = tea_df["perc_unreg_workers"] / 100
+    tea_df = tea_df.sort_values("nearest_distance")
+    return tea_df
 
 
 def set_admin(var: str) -> None:
@@ -171,10 +174,10 @@ st.dataframe(
     .replace(
         {
             selected_tea_var + "_quality": {
-                "good": "Good",
-                "ok": "Medium",
-                "pretty_bad": "Pretty Bad",
-                "bad": "Bad",
+                "good": "Good (within 500m)",
+                "ok": "Medium (within 1000m)",
+                "pretty_bad": "Pretty Bad (within 2000m)",
+                "bad": "Bad (more than 2000m)",
             }
         }
     ),
