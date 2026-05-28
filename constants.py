@@ -341,22 +341,22 @@ THANA_VAR_COLS = [
     # "25_perc_distance",
     # "75_perc_distance",
     # "std_dev_distance",
-    "mean_num_tower_500m",
-    "mean_num_tower_1000m",
-    "mean_num_tower_2000m",
-    "mean_num_tower_5000m",
-    "mean_num_tower_10000m",
+    # "mean_num_tower_500m",
+    # "mean_num_tower_1000m",
+    # "mean_num_tower_2000m",
+    # "mean_num_tower_5000m",
+    # "mean_num_tower_10000m",
 ]
 
 DISTRICT_VAR_COLS = DISTRICT_ONLY_VAR_COLS + THANA_VAR_COLS
 
 TEA_VAR_COLS = [
     "nearest_distance",
-    "num_tower_500m",
-    "num_tower_1000m",
-    "num_tower_2000m",
-    "num_tower_5000m",
-    "num_tower_10000m",
+    # "num_tower_500m",
+    # "num_tower_1000m",
+    # "num_tower_2000m",
+    # "num_tower_5000m",
+    # "num_tower_10000m",
 ]
 
 

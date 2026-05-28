@@ -108,6 +108,8 @@ def hightlight_row(row: pd.Series) -> list[str]:
         quality_col = f"{col}_quality"
         if row[quality_col] == "bad":
             styles.append("color: red")
+        elif row[quality_col] == "pretty_bad":
+            styles.append("color: orange")
         else:
             styles.append("")
     return styles
@@ -124,11 +126,14 @@ toc.header("Sylhet Tea Gardens Deep Dive")
 
 toc.subheader("Sylhet Choropleth Map with Tea Estate Markers")
 
-selected_tea_var = st.selectbox(
-    label="**Please select Variable to Visualize in Map**",
-    options=TEA_VAR_COLS,
-    format_func=lambda x: COL_NAME_MAP[x],
-)
+# selected_tea_var = st.selectbox(
+#     label="**Please select Variable to Visualize in Map**",
+#     options=TEA_VAR_COLS,
+#     format_func=lambda x: COL_NAME_MAP[x],
+# )
+selected_tea_var = "nearest_distance"
+
+st.markdown(f"### {COL_NAME_MAP[selected_tea_var]}")
 
 tea_map_html = get_map_html(selected_tea_var, "Tea")
 
@@ -152,6 +157,33 @@ st.dataframe(
         "perc_unreg_workers": st.column_config.NumberColumn(
             COL_NAME_MAP["perc_unreg_workers"], format="percent"
         ),
+    },
+)
+
+st.space()
+toc.subheader("Number of Tea Estates Quality Group")
+
+st.dataframe(
+    tea_table[selected_tea_var + "_quality"]
+    .value_counts()
+    .loc[["good", "ok", "pretty_bad", "bad"]]
+    .reset_index()
+    .replace(
+        {
+            selected_tea_var + "_quality": {
+                "good": "Good",
+                "ok": "Medium",
+                "pretty_bad": "Pretty Bad",
+                "bad": "Bad",
+            }
+        }
+    ),
+    width="content",
+    hide_index=True,
+    column_config={
+        selected_tea_var + "_quality": COL_NAME_MAP[selected_tea_var]
+        + " Quality Group",
+        "count": "Number of Tea Estates",
     },
 )
 

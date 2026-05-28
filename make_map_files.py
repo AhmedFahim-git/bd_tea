@@ -19,7 +19,12 @@ MAP_THANA_DF = gpd.read_file("data/intermediate/final_thana_viz.gpkg")
 TEA_DF = gpd.read_file("data/intermediate/tea_data.gpkg")
 
 
-FOLIUM_COLOR_MAP = {"good": "green", "ok": "beige", "bad": "red"}
+FOLIUM_COLOR_MAP = {
+    "good": "green",
+    "ok": "beige",
+    "pretty_bad": "orange",
+    "bad": "red",
+}
 
 
 def write_zip_file(file_base: str, text: str) -> None:
@@ -176,7 +181,8 @@ if __name__ == "__main__":
     for var in TEA_VAR_COLS:
         tea_list.append((var, sylhet_thana_df, "Tea", TEA_DF))
 
-    in_list = dist_list + thana_list + tea_list
+    # in_list = dist_list + thana_list + tea_list
+    in_list = tea_list
     with ProcessPoolExecutor(max_workers=8) as executor:
         for my_tuple, res in zip(in_list, executor.map(make_save_map, in_list)):
             try:

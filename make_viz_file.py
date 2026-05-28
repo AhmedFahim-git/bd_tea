@@ -27,7 +27,12 @@ NUM_2000_MAP = {(0, 9): "bad", (9, 26): "ok", (26, float("inf")): "good"}
 NUM_5000_MAP = {(0, 26): "bad", (26, 81): "ok", (81, float("inf")): "good"}
 NUM_10000_MAP = {(0, 76): "bad", (76, 251): "ok", (251, float("inf")): "good"}
 
-DIST_MAP = {(0, 2000): "good", (2000, 5000): "ok", (5000, float("inf")): "bad"}
+DIST_MAP = {
+    (0, 500): "good",
+    (500, 1000): "ok",
+    (1000, 2000): "pretty_bad",
+    (2000, float("inf")): "bad",
+}
 
 RADIUS_DISTANCES = [500, 1000, 2000, 5000, 10000]
 RADIUS_MAPS = [NUM_500_MAP, NUM_1000_MAP, NUM_2000_MAP, NUM_5000_MAP, NUM_10000_MAP]
