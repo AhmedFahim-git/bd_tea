@@ -15,10 +15,17 @@ from constants import (
     TEA_TABLE_COLS,
     TEA_VAR_COLS,
 )
+from make_viz_file import get_quality
 
 st.set_page_config(layout="wide")
 
 DATA_COLS = [COL_NAME_MAP[x] for x in DISTRICT_VAR_COLS]
+DIST_MAP = {
+    (0, 500): "good",
+    (500, 1000): "ok",
+    (1000, 1500): "pretty_bad",
+    (1500, float("inf")): "bad",
+}
 
 
 # Adapted from https://discuss.streamlit.io/t/table-of-contents-widget/3470/8
@@ -73,6 +80,8 @@ def get_map_html(var_name: str, admin_level: str) -> str:
         file_base = var_name.replace("+", "_").replace(" ", "_") + "_thana"
     elif admin_level == "Tea":
         file_base = var_name.replace("+", "_").replace(" ", "_") + "_tea"
+    elif admin_level == "Tea_no_chloro":
+        file_base = var_name.replace("+", "_").replace(" ", "_") + "_tea_no_chloro"
     html_file = read_zip_file(file_base)
     return html_file
 
@@ -92,6 +101,9 @@ def load_tea_data() -> pd.DataFrame:
     tea_df = pd.read_csv("data/final/tea_data.csv")
     tea_df["perc_unreg_workers"] = tea_df["perc_unreg_workers"] / 100
     tea_df = tea_df.sort_values("nearest_distance")
+    tea_df["nearest_distance_quality"] = tea_df["nearest_distance"].apply(
+        get_quality, metric_dict=DIST_MAP
+    )
     return tea_df
 
 
@@ -112,7 +124,11 @@ def hightlight_row(row: pd.Series) -> list[str]:
         if row[quality_col] == "bad":
             styles.append("color: red")
         elif row[quality_col] == "pretty_bad":
+            styles.append("color: red")
+        elif row[quality_col] == "ok":
             styles.append("color: orange")
+        elif row[quality_col] == "good":
+            styles.append("color: green")
         else:
             styles.append("")
     return styles
@@ -129,6 +145,10 @@ toc.header("Sylhet Tea Gardens Deep Dive")
 
 toc.subheader("Sylhet Choropleth Map with Tea Estate Markers")
 
+st.write(
+    "The following map shows the Tea Estates in Sylhet, color-coded by how close they are to the nearest cell tower. Green shows Tea Estates with a cell tower within 500 meters, orange for estates within 1000 meters, and red for Tea Estates with a cell tower beyond 1000 meters."
+)
+
 # selected_tea_var = st.selectbox(
 #     label="**Please select Variable to Visualize in Map**",
 #     options=TEA_VAR_COLS,
@@ -138,7 +158,16 @@ selected_tea_var = "nearest_distance"
 
 st.markdown(f"### {COL_NAME_MAP[selected_tea_var]}")
 
-tea_map_html = get_map_html(selected_tea_var, "Tea")
+extension = st.selectbox(
+    label="**Choropleth Map**",
+    options=["Tea_no_chloro", "Tea"],
+    format_func=lambda x: "Don't include Chropleth Map"
+    if x == "Tea_no_chloro"
+    else "Include Choropleth Map",
+    width=500,
+)
+
+tea_map_html = get_map_html(selected_tea_var, extension)
 
 components.html(tea_map_html, height=700)
 
@@ -175,9 +204,9 @@ st.dataframe(
         {
             selected_tea_var + "_quality": {
                 "good": "Good (within 500m)",
-                "ok": "Medium (within 1000m)",
-                "pretty_bad": "Pretty Bad (within 2000m)",
-                "bad": "Bad (more than 2000m)",
+                "ok": "Okay (within 1000m)",
+                "pretty_bad": "Bad (within 1500m)",
+                "bad": "Horrible (Above 1500m)",
             }
         }
     ),

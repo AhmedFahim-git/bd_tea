@@ -19,12 +19,7 @@ MAP_THANA_DF = gpd.read_file("data/intermediate/final_thana_viz.gpkg")
 TEA_DF = gpd.read_file("data/intermediate/tea_data.gpkg")
 
 
-FOLIUM_COLOR_MAP = {
-    "good": "green",
-    "ok": "beige",
-    "pretty_bad": "orange",
-    "bad": "red",
-}
+FOLIUM_COLOR_MAP = {"good": "green", "ok": "orange", "bad": "red"}
 
 
 def write_zip_file(file_base: str, text: str) -> None:
@@ -121,7 +116,10 @@ def get_map_html(var_name: str, input_df: gpd.GeoDataFrame, level: str) -> str:
 
 
 def get_tea_map_html(
-    var_name: str, input_df: gpd.GeoDataFrame, tea_df: gpd.GeoDataFrame
+    var_name: str,
+    input_df: gpd.GeoDataFrame,
+    tea_df: gpd.GeoDataFrame,
+    include_chloro: bool = True,
 ):
     m = folium.Map(location=[24.5, 91.666667], zoom_start=9, font_size="1.2rem")
     id_col = "admin3Pcode"
@@ -130,7 +128,8 @@ def get_tea_map_html(
     if var_name == "nearest_distance":
         var_name = "distance"
     var_name = "mean_" + var_name
-    make_map(m, input_df, id_col, name_col, var_name, "Upazila")
+    if include_chloro:
+        make_map(m, input_df, id_col, name_col, var_name, "Upazila")
     for _, row in tea_df.iterrows():
         folium.Marker(
             location=(row["lat"], row["lon"]),
@@ -148,9 +147,9 @@ def get_tea_map_html(
 
 
 def make_save_map(
-    in_tuple: tuple[str, gpd.GeoDataFrame, str, gpd.GeoDataFrame | None],
+    in_tuple: tuple[str, gpd.GeoDataFrame, str, gpd.GeoDataFrame | None, bool | None],
 ) -> str:
-    var, input_df, level, extra_df = in_tuple
+    var, input_df, level, extra_df, include_chloro = in_tuple
     map_html = ""
     file_base = ""
     print("Started", level, var)
@@ -160,9 +159,12 @@ def make_save_map(
     elif level == "Upazila":
         map_html = get_map_html(var, input_df, level)
         file_base = var.replace("+", "_").replace(" ", "_") + "_thana"
-    else:
-        map_html = get_tea_map_html(var, input_df, extra_df)
+    elif level == "Tea":
+        map_html = get_tea_map_html(var, input_df, extra_df, include_chloro)
         file_base = var.replace("+", "_").replace(" ", "_") + "_tea"
+    elif level == "Tea_no_chloro":
+        map_html = get_tea_map_html(var, input_df, extra_df, include_chloro)
+        file_base = var.replace("+", "_").replace(" ", "_") + "_tea_no_chloro"
     write_zip_file(file_base, map_html)
     return f"Completed {level} {var}"
 
@@ -170,7 +172,7 @@ def make_save_map(
 if __name__ == "__main__":
     dist_list = []
     for var in DISTRICT_VAR_COLS:
-        dist_list.append((var, MAP_DISTRICT_DF, "District", None))
+        dist_list.append((var, MAP_DISTRICT_DF, "District", None, None))
 
     thana_list = []
     for var in THANA_VAR_COLS:
@@ -179,10 +181,11 @@ if __name__ == "__main__":
     sylhet_thana_df = MAP_THANA_DF[MAP_THANA_DF["admin1Name_en"] == "Sylhet"]
     tea_list = []
     for var in TEA_VAR_COLS:
-        tea_list.append((var, sylhet_thana_df, "Tea", TEA_DF))
+        tea_list.append((var, sylhet_thana_df, "Tea", TEA_DF, True))
+        tea_list.append((var, sylhet_thana_df, "Tea_no_chloro", TEA_DF, False))
 
-    # in_list = dist_list + thana_list + tea_list
-    in_list = tea_list
+    in_list = dist_list + thana_list + tea_list
+    # in_list = tea_list
     with ProcessPoolExecutor(max_workers=8) as executor:
         for my_tuple, res in zip(in_list, executor.map(make_save_map, in_list)):
             try:
