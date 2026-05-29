@@ -16,7 +16,7 @@ from constants import (
     TEA_VAR_COLS,
 )
 
-st.set_page_config(layout="wide")
+st.set_page_config(layout="wide", initial_sidebar_state="collapsed")
 
 DATA_COLS = [COL_NAME_MAP[x] for x in DISTRICT_VAR_COLS]
 DIST_MAP = {
