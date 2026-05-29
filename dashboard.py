@@ -15,7 +15,6 @@ from constants import (
     TEA_TABLE_COLS,
     TEA_VAR_COLS,
 )
-from make_viz_file import get_quality
 
 st.set_page_config(layout="wide")
 
@@ -111,6 +110,13 @@ def set_admin(var: str) -> None:
     if var in DISTRICT_ONLY_VAR_COLS and "admin" in st.session_state:
         print("set")
         st.session_state.admin = "District"
+
+
+def get_quality(metric: int, metric_dict: dict[tuple[float, float], str]) -> str:
+    for (lower_bound, upper_bound), v in metric_dict.items():
+        if (metric >= lower_bound) and (metric < upper_bound):
+            return v
+    return "Invalid"
 
 
 def hightlight_row(row: pd.Series) -> list[str]:
