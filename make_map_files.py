@@ -121,7 +121,7 @@ def get_tea_map_html(
     tea_df: gpd.GeoDataFrame,
     include_chloro: bool = True,
 ):
-    m = folium.Map(location=[24.5, 91.666667], zoom_start=9, font_size="1.2rem")
+    m = folium.Map(location=[24.5, 91.666667], zoom_start=10, font_size="1.2rem")
     id_col = "admin3Pcode"
     name_col = "admin3Name_en"
     tea_var_name = var_name
@@ -130,6 +130,65 @@ def get_tea_map_html(
     var_name = "mean_" + var_name
     if include_chloro:
         make_map(m, input_df, id_col, name_col, var_name, "Upazila")
+    else:
+        columns = [
+            "geometry",
+            id_col,
+            name_col,
+            "Tea_State_Count",
+            "T_TL",
+            "AREA_SQKM",
+        ]
+        # folium.Choropleth(
+        #     geo_data=input_df,
+        #     data=input_df,
+        #     columns=[id_col],
+        #     key_on="feature.properties." + id_col,
+        #     line_weight=0,
+        #     # legend_name=COL_NAME_MAP[var_name],
+        #     fill_color="yellow",
+        #     fill_opacity=0.6,
+        # ).add_to(m)
+
+        tooltip = folium.GeoJsonTooltip(
+            fields=[
+                name_col,
+                "Tea_State_Count",
+                "T_TL",
+                "AREA_SQKM",
+            ],
+            aliases=[
+                "Upazila:",
+                f"{COL_NAME_MAP['Tea_State_Count']}",
+                f"{COL_NAME_MAP['T_TL']}",
+                f"{COL_NAME_MAP['AREA_SQKM']}",
+            ],
+            localize=True,
+            sticky=False,
+            labels=True,
+            max_width=800,
+        )
+
+        folium.GeoJson(
+            input_df[columns].to_geo_dict(),
+            style_function=lambda feature: {
+                "color": "blue"
+                if feature["properties"]["Tea_State_Count"] > 0
+                else "black",
+                "fillColor": "yellow",
+                "fillOpacity": 0.15,
+                "weight": 1.3 if feature["properties"]["Tea_State_Count"] > 0 else 0.5,
+            },
+            highlight_function=lambda feature: {
+                "opacity": 1,
+                "weight": 2.3 if feature["properties"]["Tea_State_Count"] > 0 else 1,
+                "color": "blue"
+                if feature["properties"]["Tea_State_Count"] > 0
+                else "black",
+            },
+            tooltip=tooltip,
+        ).add_to(m)
+
     for _, row in tea_df.iterrows():
         folium.Marker(
             location=(row["lat"], row["lon"]),
@@ -181,11 +240,11 @@ if __name__ == "__main__":
     sylhet_thana_df = MAP_THANA_DF[MAP_THANA_DF["admin1Name_en"] == "Sylhet"]
     tea_list = []
     for var in TEA_VAR_COLS:
-        tea_list.append((var, sylhet_thana_df, "Tea", TEA_DF, True))
+        # tea_list.append((var, sylhet_thana_df, "Tea", TEA_DF, True))
         tea_list.append((var, sylhet_thana_df, "Tea_no_chloro", TEA_DF, False))
 
-    in_list = dist_list + thana_list + tea_list
-    # in_list = tea_list
+    # in_list = dist_list + thana_list + tea_list
+    in_list = tea_list
     with ProcessPoolExecutor(max_workers=8) as executor:
         for my_tuple, res in zip(in_list, executor.map(make_save_map, in_list)):
             try:

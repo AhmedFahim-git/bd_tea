@@ -99,7 +99,7 @@ def read_data_csv() -> pd.DataFrame:
 def load_tea_data() -> pd.DataFrame:
     tea_df = pd.read_csv("data/final/tea_data.csv")
     tea_df["perc_unreg_workers"] = tea_df["perc_unreg_workers"] / 100
-    tea_df = tea_df.sort_values("nearest_distance")
+    tea_df = tea_df.sort_values("nearest_distance", ascending=False)
     tea_df["nearest_distance_quality"] = tea_df["nearest_distance"].apply(
         get_quality, metric_dict=DIST_MAP
     )
@@ -119,7 +119,7 @@ def get_quality(metric: int, metric_dict: dict[tuple[float, float], str]) -> str
     return "Invalid"
 
 
-def hightlight_row(row: pd.Series) -> list[str]:
+def highlight_row(row: pd.Series) -> list[str]:
     styles = []
     all_tea_cols = TEA_VAR_COLS
     for col in row.index:
@@ -183,7 +183,7 @@ tea_table = load_tea_data()
 
 
 st.dataframe(
-    tea_table.style.apply(hightlight_row, axis=1),
+    tea_table.style.apply(highlight_row, axis=1),
     width="content",
     hide_index=True,
     column_order=TEA_TABLE_COLS,
@@ -199,7 +199,7 @@ st.dataframe(
 )
 
 st.space()
-toc.subheader("Number of Tea Estates Quality Group")
+toc.subheader("Tea Estates categorized based on their Signal Quality")
 
 st.dataframe(
     tea_table[selected_tea_var + "_quality"]
@@ -215,12 +215,15 @@ st.dataframe(
                 "bad": "Horrible (Above 1500m)",
             }
         }
+    )
+    .style.apply(
+        lambda x: ["color: green", "color: orange", "color: red", "color: red"],
+        subset="count",
     ),
     width="content",
     hide_index=True,
     column_config={
-        selected_tea_var + "_quality": COL_NAME_MAP[selected_tea_var]
-        + " Quality Group",
+        selected_tea_var + "_quality": "Signal Categories",
         "count": "Number of Tea Estates",
     },
 )
