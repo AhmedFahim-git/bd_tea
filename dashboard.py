@@ -167,7 +167,7 @@ st.markdown(f"### {COL_NAME_MAP[selected_tea_var]}")
 extension = st.selectbox(
     label="**Choropleth Map**",
     options=["Tea_no_chloro", "Tea"],
-    format_func=lambda x: "Don't include Chropleth Map"
+    format_func=lambda x: "Don't include Choropleth Map"
     if x == "Tea_no_chloro"
     else "Include Choropleth Map",
     width=500,
