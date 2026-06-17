@@ -21,6 +21,11 @@ Both public and private (proprietary) datasets were used in the analysis. The fo
 | Bangladesh - Subnational Population Statistics | UNFPA | https://data.humdata.org/dataset/cod-ps-bgd | Bangladesh upto administrative level 0-3, 2022 | T_TL | XLSX | Download | data/raw/bgd_admpop_2022.xlsx |
 | Bangladesh Poverty Map | World Bank Group | https://www.worldbank.org/en/data/interactive/2016/11/10/bangladesh-poverty-maps | Bangladesh, upto administrative level 2-3, 2010 | Poverty headcount ratio (%) 4G | XLSX, GDB | Download | data/raw/gis_data/gdb/Bangladesh_Data.gdb, data/raw/zila_and_upazila_data/upazila_indicators.xlsx, data/raw/zila_and_upazila_data/zila_indicators.xlsx |
 
+
+
+## Data Pipeline Overview
+
+
 ```mermaid
 flowchart LR
     subgraph ide0 [Raw Data]
