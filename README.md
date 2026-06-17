@@ -8,19 +8,67 @@ In this project we analyze the current state of Universal and Meaningful Connect
 Both public and private (proprietary) datasets were used in the analysis. The following table gives overview of the datasets used:
 
 
-| Dataset name | Source (organization/provider) | Link (URL) | Coverage (geographic detail and time) | Key variables (max. 5) | Format (CSV, JSON, XLS, SQL, etc.) | Access method (download, API call, scraping, etc.) |
-|---|---|---|---|---|---|---|
-| 4G District-wise download speed | BTRC | [Proprietary](https://drive.google.com/file/d/1cyEG846h9zFgtyZInvY35Lu_BaS9YJ6n/view?usp=drive_link) | Bangladesh, up to District (Admin 02) level, 2026 | 4G Avg. UE throughput DL (MB) | XLSX | Download |
-| Tea Estate Location | Bangladesh Tea Board | [Proprietary](https://drive.google.com/file/d/1nsYx7tp3dM28QtBxyEaatEnnQFvQAycC/view?usp=drive_link) | Sylhet, 2026 | lat, lon | PDF | Download |
-| Tea Estate worker and population statistics | Tea Board Sylhet | [Proprietary](https://drive.google.com/file/d/1pOrtwU_HY7on5I4aNPxFzMYL7DT3A8xr/view?usp=drive_link) | Sylhet, 2026 | unreg_workes, tea_estate_pop | PDF | Download |
-| Operator X Cell tower location | Operator X Employee | [Proprietary](https://drive.google.com/file/d/16WMRQwqFU-8WHdrESuJ0u1fVxjQC7ajB/view?usp=drive_link) | Bangladesh, 2026 | lat, lon | XLSX | Download |
-| Registered 170 Tea Estate List | Bangladesh Tea Board | https://teaboard.gov.bd/pages/notices/6922ed22dbfab28ce0c016c | Bangladesh, 2025 | District, Thana | PDF | Download |
-| Bangladesh: Population and Housing Census Dataset | Bangladesh Bureau of Statistics (BBS) | https://data.humdata.org/dataset/population-and-housing-census-dataset | Bangladesh, up to District (Admin 02) level, 2022 | %_Mobile Phone_Total_15 year+, %_Internet_Total_15 year+ | XLSX | Download |
-| Bangladesh - Subnational Administrative Boundaries | Office for the Coordination of Humanitarian Affairs (OCHA) | https://ckan.rimes.int/dataset/bangladesh-subnational-boundaries | Bangladesh, up to Admin level 04, 2024 | Geometry, AREA_SQKM | GDB, XLSX | Download |
-| Bangladesh - Population Density | WorldPop | https://data.humdata.org/dataset/worldpop-population-density-for-bangladesh | Bangladesh, resolution of 30 arc-seconds, 2020 | lat, lon, population_density | CSV | Download |
-| Bangladesh - Subnational Population Statistics | UNFPA | https://data.humdata.org/dataset/cod-ps-bgd | Bangladesh upto administrative level 0-3, 2022 | T_TL | XLSX | Download |
-| Bangladesh Poverty Map | World Bank Group | https://www.worldbank.org/en/data/interactive/2016/11/10/bangladesh-poverty-maps | Bangladesh, upto administrative level 2-3, 2010 | Poverty headcount ratio (%) 4G | XLSX, GDB | Download |
+| Dataset name | Source (organization/provider) | Link (URL) | Coverage (geographic detail and time) | Key variables (max. 5) | Format (CSV, JSON, XLS, SQL, etc.) | Access method (download, API call, scraping, etc.) | Filename(s) used in Project |
+|---|---|---|---|---|---|---|---|
+| 4G District-wise download speed | BTRC | [Proprietary](https://drive.google.com/file/d/1cyEG846h9zFgtyZInvY35Lu_BaS9YJ6n/view?usp=drive_link) | Bangladesh, up to District (Admin 02) level, 2026 | 4G Avg. UE throughput DL (MB) | XLSX | Download | data/raw/qos_radio_network_kpi_2026-05-19.xlsx |
+| Tea Estate Location | Bangladesh Tea Board | [Proprietary](https://drive.google.com/file/d/1nsYx7tp3dM28QtBxyEaatEnnQFvQAycC/view?usp=drive_link) | Sylhet, 2026 | lat, lon | PDF | Download | data/raw/tea.pdf |
+| Tea Estate worker and population statistics | Tea Board Sylhet | [Proprietary](https://drive.google.com/file/d/1pOrtwU_HY7on5I4aNPxFzMYL7DT3A8xr/view?usp=drive_link) | Sylhet, 2026 | unreg_workes, tea_estate_pop | PDF | Download | data/raw/tea_workers.pdf |
+| Operator X Cell tower location | Operator X Employee | [Proprietary](https://drive.google.com/file/d/16WMRQwqFU-8WHdrESuJ0u1fVxjQC7ajB/view?usp=drive_link) | Bangladesh, 2026 | lat, lon | XLSX | Download | data/raw/tower.xlsx |
+| Registered 170 Tea Estate List | Bangladesh Tea Board | https://teaboard.gov.bd/pages/notices/6922ed22dbfab28ce0c016c | Bangladesh, 2025 | District, Thana | PDF | Download | data/raw/Tea_Estates_list.pdf |
+| Bangladesh: Population and Housing Census Dataset | Bangladesh Bureau of Statistics (BBS) | https://data.humdata.org/dataset/population-and-housing-census-dataset | Bangladesh, up to District (Admin 02) level, 2022 | %_Mobile Phone_Total_15 year+, %_Internet_Total_15 year+ | XLSX | Download | data/raw/bangladesh_bbs_population-and-housing-census-dataset_2022_admin-02.xlsx |
+| Bangladesh - Subnational Administrative Boundaries | Office for the Coordination of Humanitarian Affairs (OCHA) | https://ckan.rimes.int/dataset/bangladesh-subnational-boundaries | Bangladesh, up to Admin level 04, 2024 | Geometry, AREA_SQKM | GDB, XLSX | Download | data/raw/BGD_AdminBoundaries_candidate.gdb, data/raw/ data/raw/bgd_adminboundaries_tabulardata.xlsx |
+| Bangladesh - Population Density | WorldPop | https://data.humdata.org/dataset/worldpop-population-density-for-bangladesh | Bangladesh, resolution of 30 arc-seconds, 2020 | lat, lon, population_density | CSV | Download | data/raw/bgd_pd_2020_1km_UNadj_ASCII_XYZ.csv |
+| Bangladesh - Subnational Population Statistics | UNFPA | https://data.humdata.org/dataset/cod-ps-bgd | Bangladesh upto administrative level 0-3, 2022 | T_TL | XLSX | Download | data/raw/bgd_admpop_2022.xlsx |
+| Bangladesh Poverty Map | World Bank Group | https://www.worldbank.org/en/data/interactive/2016/11/10/bangladesh-poverty-maps | Bangladesh, upto administrative level 2-3, 2010 | Poverty headcount ratio (%) 4G | XLSX, GDB | Download | data/raw/gis_data/gdb/Bangladesh_Data.gdb, data/raw/zila_and_upazila_data/upazila_indicators.xlsx, data/raw/zila_and_upazila_data/zila_indicators.xlsx |
 
+```mermaid
+flowchart LR
+    subgraph ide0 [Raw Data]
+    C[/Tea Estate worker and population statistics/]
+    B[/Tea Estate Location/]
+    D[/Operator X Cell tower location/]
+    H[/Bangladesh - Population Density/]
+    E[/Registered 170 Tea Estate List/]
+    A[/4G District-wise download speed/];
+    F[/Bangladesh: Population and Housing Census Dataset/]
+    I[/Bangladesh - Subnational Population Statistics/]
+    G[/Bangladesh - Subnational Administrative Boundaries/]
+    J[/Bangladesh Poverty Map/]
+    end
+    subgraph ide1 [Data Extraction and Cleaning]
+    C --> M[Extract data using Gemini]
+    B --> L[Extract Tea Estate Coordinates using Docling and names using ChatGPT]
+    E --> K[Extract District and Thana names using ChatGPT]
+    K --> P[Update Thana and District names to current official names where required]
+    F --> S[Update District Names to current standards whre required]
+    J --> R[Update District and Upazila names and Admin Codes to current standards where required]
+    L --> O[Corrected Tea Estate Coordinates that fell outside Bangladesh]
+    end
+    subgraph ide2 [Data Processing and Metric Calculation]
+    O --> N[Align datasets and Combine]
+    M --> N
+    N --> U[Calculate Distance to Nearest Cell Tower metric]
+    D --> U
+    D --> V
+    H --> V[Calculate distance to nearest tower and num towers in x km metrics on population density grid]
+    P --> T[Calculate number of Tea Estates in each District and Upazlia]
+    G --> W[Calculate Cell Tower density in District and Upazila]
+    D --> W
+    G --> Q[Combine datasets]
+    U --> Q
+    V --> Q
+    W --> Q
+    I --> Q
+    A --> Q
+    S --> Q
+    R --> Q
+    T --> Q
+    end
+    subgraph ide3 [Final Outputs]
+    Q --> X[Create Folium Maps for Dashboard]
+    Q --> Y[Create aggregate data for plots and tables in Dashboard]
+    end
+```
 
 ## Data Cleaning
 
