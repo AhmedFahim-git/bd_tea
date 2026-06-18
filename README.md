@@ -15,7 +15,9 @@ Both public and private (proprietary) datasets were used in the analysis. The fo
 | Tea Estate worker and population statistics | Tea Board Sylhet | [Proprietary](https://drive.google.com/file/d/1pOrtwU_HY7on5I4aNPxFzMYL7DT3A8xr/view?usp=drive_link) | Sylhet, 2026 | unreg_workes, tea_estate_pop | PDF | Download | data/raw/tea_workers.pdf |
 | Operator X Cell tower location | Operator X Employee | [Proprietary](https://drive.google.com/file/d/16WMRQwqFU-8WHdrESuJ0u1fVxjQC7ajB/view?usp=drive_link) | Bangladesh, 2026 | lat, lon | XLSX | Download | data/raw/tower.xlsx |
 | Registered 170 Tea Estate List | Bangladesh Tea Board | https://teaboard.gov.bd/pages/notices/6922ed22dbfab28ce0c016c | Bangladesh, 2025 | District, Thana | PDF | Download | data/raw/Tea_Estates_list.pdf |
+| ITU ICT Price Baskets | International Telecommunication Union (ITU) | https://www.itu.int/en/ITU-D/Statistics/Pages/ICTprices/default.aspx | World, Countrywise, 2008-2025 | Unit, Code, Economy | XLSX | Download | data/raw/ITU_ICTPriceBaskets_2008-2025.xlsx |
 | Bangladesh: Population and Housing Census Dataset | Bangladesh Bureau of Statistics (BBS) | https://data.humdata.org/dataset/population-and-housing-census-dataset | Bangladesh, up to District (Admin 02) level, 2022 | %_Mobile Phone_Total_15 year+, %_Internet_Total_15 year+ | XLSX | Download | data/raw/bangladesh_bbs_population-and-housing-census-dataset_2022_admin-02.xlsx |
+| Bangladesh HIES 2022 Raw Survey Data | Bangladesh Bureau of Statistics (BBS) | [Proprietary](https://drive.google.com/file/d/1Y4o5gGJxZcVRRzBUFbnk3GVSxroAUWpm/view?usp=sharing) | Bangladesh, up to District (Admin 02) level, 2022 | s4bq16 (code for Monthly_income) | DTA (Stata Data File) | Download | data/raw/HH_SEC_4A.dta |
 | Bangladesh - Subnational Administrative Boundaries | Office for the Coordination of Humanitarian Affairs (OCHA) | https://ckan.rimes.int/dataset/bangladesh-subnational-boundaries | Bangladesh, up to Admin level 04, 2024 | Geometry, AREA_SQKM | GDB, XLSX | Download | data/raw/BGD_AdminBoundaries_candidate.gdb, data/raw/ data/raw/bgd_adminboundaries_tabulardata.xlsx |
 | Bangladesh - Population Density | WorldPop | https://data.humdata.org/dataset/worldpop-population-density-for-bangladesh | Bangladesh, resolution of 30 arc-seconds, 2020 | lat, lon, population_density | CSV | Download | data/raw/bgd_pd_2020_1km_UNadj_ASCII_XYZ.csv |
 | Bangladesh - Subnational Population Statistics | UNFPA | https://data.humdata.org/dataset/cod-ps-bgd | Bangladesh upto administrative level 0-3, 2022 | T_TL | XLSX | Download | data/raw/bgd_admpop_2022.xlsx |
@@ -29,49 +31,55 @@ Both public and private (proprietary) datasets were used in the analysis. The fo
 ```mermaid
 flowchart LR
     subgraph ide0 [Raw Data]
-    C[/Tea Estate worker and population statistics/]
-    B[/Tea Estate Location/]
-    D[/Operator X Cell tower location/]
-    H[/Bangladesh - Population Density/]
-    E[/Registered 170 Tea Estate List/]
-    A[/4G District-wise download speed/];
-    F[/Bangladesh: Population and Housing Census Dataset/]
-    I[/Bangladesh - Subnational Population Statistics/]
-    G[/Bangladesh - Subnational Administrative Boundaries/]
-    J[/Bangladesh Poverty Map/]
+        C[/Tea Estate worker and population statistics/]
+        B[/Tea Estate Location/]
+        D[/Operator X Cell tower location/]
+        H[/Bangladesh - Population Density/]
+        E[/Registered 170 Tea Estate List/]
+        A[/4G District-wise download speed/];
+        F[/Bangladesh: Population and Housing Census Dataset/]
+        I[/Bangladesh - Subnational Population Statistics/]
+        G[/Bangladesh - Subnational Administrative Boundaries/]
+        J[/Bangladesh Poverty Map/]
+        AA[/Bangladesh HIES 2022 Raw Survey Data/]
+        Z[/ITU ICT Price Baskets/]
     end
     subgraph ide1 [Data Extraction and Cleaning]
-    C --> M[Extract data using Gemini]
-    B --> L[Extract Tea Estate Coordinates using Docling and names using ChatGPT]
-    E --> K[Extract District and Thana names using ChatGPT]
-    K --> P[Update Thana and District names to current official names where required]
-    F --> S[Update District Names to current standards whre required]
-    J --> R[Update District and Upazila names and Admin Codes to current standards where required]
-    L --> O[Corrected Tea Estate Coordinates that fell outside Bangladesh]
+        C --> M[Extract data using Gemini]
+        B --> L[Extract Tea Estate Coordinates using Docling and names using ChatGPT]
+        E --> K[Extract District and Thana names using ChatGPT]
+        K --> P[Update Thana and District names to current official names where required]
+        F --> S[Update District names to current standards whre required]
+        J --> R[Update District and Upazila names and Admin Codes to current standards where required]
+        L --> O[Corrected Tea Estate Coordinates that fell outside Bangladesh]
+        AA --> AB[Update Dsictrict names to current standards]
     end
     subgraph ide2 [Data Processing and Metric Calculation]
-    O --> N[Align datasets and Combine]
-    M --> N
-    N --> U[Calculate Distance to Nearest Cell Tower metric]
-    D --> U
-    D --> V
-    H --> V[Calculate distance to nearest tower and num towers in x km metrics on population density grid]
-    P --> T[Calculate number of Tea Estates in each District and Upazlia]
-    G --> W[Calculate Cell Tower density in District and Upazila]
-    D --> W
-    G --> Q[Combine datasets]
-    U --> Q
-    V --> Q
-    W --> Q
-    I --> Q
-    A --> Q
-    S --> Q
-    R --> Q
-    T --> Q
+        O --> N[Align datasets and Combine]
+        M --> N
+        N --> U[Calculate Distance to Nearest Cell Tower metric]
+        D --> U
+        D --> V
+        H --> V[Calculate distance to nearest tower and num towers in x km metrics on population density grid]
+        P --> T[Calculate number of Tea Estates in each District and Upazlia]
+        G --> W[Calculate Cell Tower density in District and Upazila]
+        D --> W
+        Z --> AC[Calculate Mobile Data Price as % of Monthly Income]
+        AB --> AC
+        G --> Q[Combine datasets]
+        U --> Q
+        V --> Q
+        W --> Q
+        I --> Q
+        A --> Q
+        S --> Q
+        R --> Q
+        T --> Q
+        AC --> Q
     end
     subgraph ide3 [Final Outputs]
-    Q --> X[Create Folium Maps for Dashboard]
-    Q --> Y[Create aggregate data for plots and tables in Dashboard]
+        Q --> X[Create Folium Maps for Dashboard]
+        Q --> Y[Create aggregate data for plots and tables in Dashboard]
     end
 ```
 
