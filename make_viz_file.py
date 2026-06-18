@@ -10,6 +10,9 @@ from constants import (
     ELECTRICITY_BBS_COLS,
     EMPLOY_BBS_COLS,
     FINANCIAL_BBS_COLS,
+    GENDER_PARITY_DICT,
+    HIES_DISTRICT_MAP,
+    INCOME_PRICE_COLS,
     INTERNET_BBS_COLS,
     LITERACY_BBS_COLS,
     MOBILE_BANK_BBS_COLS,
@@ -18,6 +21,7 @@ from constants import (
     POVERTY_THANA_COLS,
     TEA_DISTRICT_MAP,
     TEA_THANA_MAP,
+    USD_BDT_EXCHANGE_RATE_2025,
     XYZ_JOIN_COLS,
 )
 
@@ -42,6 +46,7 @@ def get_bbs_data() -> pd.DataFrame:
         "data/raw/bangladesh_bbs_population-and-housing-census-dataset_2022_admin-02.xlsx",
         sheet_name=" Population having Mobile Phone",
     )
+
     literacy_bbs = pd.read_excel(
         "data/raw/bangladesh_bbs_population-and-housing-census-dataset_2022_admin-02.xlsx",
         sheet_name="Literacy Rate_Aged 7 Yrs & Abov",
@@ -106,7 +111,52 @@ def get_bbs_data() -> pd.DataFrame:
         * 100
     ).round(2)
 
+    for k, v in GENDER_PARITY_DICT.items():
+        bbs_data[k] = ((bbs_data[v[0]] / bbs_data[v[1]]) * 100).round(2)
+
     return bbs_data
+
+
+def get_hies_income_affordability_data() -> pd.DataFrame:
+    hies_survey_filename = "data/raw/HH_SEC_4A.dta"
+
+    df = pd.read_stata(hies_survey_filename, convert_categoricals=False).dropna(
+        subset="s4bq16"
+    )
+    price_data = pd.read_excel(
+        "data/raw/ITU_ICTPriceBaskets_2008-2025.xlsx", sheet_name="economies_2008-2025"
+    )
+    val_labels = dict()
+    with pd.io.stata.StataReader(hies_survey_filename) as reader:
+        val_labels = reader.value_labels()
+
+    df["s4aq05b"] = df["s4aq05b"].astype(int)
+    df["s4aq05b"] = df["s4aq05b"].map(val_labels["S4AQ05B"]).replace(HIES_DISTRICT_MAP)
+    df_grouped = (
+        df.groupby("s4aq05b", as_index=False)["s4bq16"]
+        .agg(["mean", "count"])
+        .rename(
+            columns={
+                "s4aq05b": "District",
+                "mean": "Monthly_income",
+                "count": "Num_Income_Samples",
+            }
+        )
+    )
+
+    usd_5GB_price = price_data[
+        (price_data["Economy"] == "Bangladesh")
+        & (price_data["Unit"] == "USD")
+        & (price_data[2025].notnull())
+        & (price_data["Code"] == "i271mb_5GB$")
+    ].iloc[0][2025]
+
+    df_grouped["Data_Cost_perc_income"] = (
+        ((usd_5GB_price * USD_BDT_EXCHANGE_RATE_2025) / df_grouped["Monthly_income"])
+        * 100
+    ).round(2)
+    df_grouped["Monthly_income"] = df_grouped["Monthly_income"].round(2)
+    return df_grouped[INCOME_PRICE_COLS]
 
 
 def get_poverty_df(adm_data: pd.DataFrame) -> pd.DataFrame:
@@ -391,7 +441,12 @@ if __name__ == "__main__":
     net_speed_df = pd.read_excel(
         "data/raw/qos_radio_network_kpi_2026-05-19.xlsx", sheet_name="Sheet1", nrows=64
     ).rename(columns={"Distric": "District"})
-    bbs_data = bbs_data.merge(net_speed_df, on="District", validate="one_to_one")
+    hies_income_affordability_df = get_hies_income_affordability_data()
+    bbs_data = bbs_data.merge(net_speed_df, on="District", validate="one_to_one").merge(
+        hies_income_affordability_df, on="District", validate="one_to_one"
+    )
+
+    assert len(bbs_data) == 64, "There should be 64 Districts"
 
     adm_data_2 = adm_data_2.merge(
         adm_data_table_2[["ADM2_EN", "AREA_SQKM"]],

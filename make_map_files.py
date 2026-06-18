@@ -10,6 +10,8 @@ from constants import (
     COL_NAME_MAP,
     COLOR_MAP,
     DISTRICT_VAR_COLS,
+    GENDER_PARITY_DICT,
+    INCOME_PRICE_COLS,
     TEA_VAR_COLS,
     THANA_VAR_COLS,
 )
@@ -58,6 +60,17 @@ def make_map(
         bins=bins,
     ).add_to(in_map)
 
+    extra_cols = []
+    extra_alises = []
+    if var_name.endswith("Gender Parity"):
+        extra_cols = list(GENDER_PARITY_DICT[var_name])
+        extra_alises = [f"{COL_NAME_MAP[i]}:" for i in GENDER_PARITY_DICT[var_name]]
+        columns.extend(extra_cols)
+    if var_name in INCOME_PRICE_COLS:
+        extra_cols = ["Num_Income_Samples"]
+        extra_alises = [f"{COL_NAME_MAP['Num_Income_Samples']}:"]
+        columns.append("Num_Income_Samples")
+
     tooltip = folium.GeoJsonTooltip(
         fields=[
             name_col,
@@ -65,14 +78,16 @@ def make_map(
             "Tea_State_Count",
             "T_TL",
             "AREA_SQKM",
-        ],
+        ]
+        + extra_cols,
         aliases=[
             f"{level}:",
             f"{COL_NAME_MAP[var_name]}:",
-            f"{COL_NAME_MAP['Tea_State_Count']}",
-            f"{COL_NAME_MAP['T_TL']}",
-            f"{COL_NAME_MAP['AREA_SQKM']}",
-        ],
+            f"{COL_NAME_MAP['Tea_State_Count']}:",
+            f"{COL_NAME_MAP['T_TL']}:",
+            f"{COL_NAME_MAP['AREA_SQKM']}:",
+        ]
+        + extra_alises,
         localize=True,
         sticky=False,
         labels=True,
@@ -235,7 +250,7 @@ if __name__ == "__main__":
 
     thana_list = []
     for var in THANA_VAR_COLS:
-        thana_list.append((var, MAP_THANA_DF, "Upazila", None))
+        thana_list.append((var, MAP_THANA_DF, "Upazila", None, None))
 
     sylhet_thana_df = MAP_THANA_DF[MAP_THANA_DF["admin1Name_en"] == "Sylhet"]
     tea_list = []
@@ -244,7 +259,7 @@ if __name__ == "__main__":
         tea_list.append((var, sylhet_thana_df, "Tea_no_chloro", TEA_DF, False))
 
     # in_list = dist_list + thana_list + tea_list
-    in_list = tea_list
+    in_list = dist_list
     with ProcessPoolExecutor(max_workers=8) as executor:
         for my_tuple, res in zip(in_list, executor.map(make_save_map, in_list)):
             try:
